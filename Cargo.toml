@@ -1,0 +1,23 @@
+[package]
+name = "my-commander"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dioxus = { version = "0.6", features = ["desktop"] }
+mountpoints = "*"
+
+tokio = { version = "*", features = ["full"] }
+rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-extensions.git" }
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
