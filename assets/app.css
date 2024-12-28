@@ -50,7 +50,17 @@ table:focus {
 .files-panel {
     height: calc(var(--app-height) - var(--top-panel-height) - var(--bottom-panel-height) - var(--file-panel-footer-height));
     overflow-y: auto;
+    scroll-snap-type: y mandatory;
 }
+
+.file-line {
+    scroll-snap-align: start;
+}
+
+.file-marked {
+    color: red;
+}
+
 
 .files-table tr {
     cursor: default;

@@ -37,8 +37,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     Ok(files) => main_state
                         .write()
                         .get_panel_state_mut(left_panel)
-                        .files
-                        .set_loaded(files),
+                        .set_files(files),
                     Err(err) => main_state
                         .write()
                         .get_panel_state_mut(left_panel)
@@ -61,15 +60,15 @@ pub fn Panel(left_panel: bool) -> Element {
                 let item_selected = panel_state.is_file_selected(no);
                 let class_selected = if main_state_read_access.left_panel_active == left_panel{
                     if item_selected {
-                        "selected-line"
+                        Some("selected-line")
                     } else {
-                        ""
+                        None
                     }
                 }else{
                     if item_selected {
-                        "selected-line-not-focused"
+                        Some("selected-line-not-focused")
                     } else {
-                        ""
+                        None
                     }
                 };
 
@@ -111,6 +110,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     },
                 };
            
+                let marked_file_class = if file_info.marked { "file-marked" } else { "" };
 
                 let hidden_attr = if file_info.hidden { "hidden" } else { "" };
 
@@ -129,9 +129,17 @@ pub fn Panel(left_panel: bool) -> Element {
 
                 let item_file_type = file_info.tp;
 
+                let style = if no == 0{
+                    "margin-top: 10px;"
+                }else{
+                    ""
+                };
+
                     let result = rsx! {
                         tr {
-                            class: "{class_selected} {hidden_attr}",
+                            id: class_selected,
+                            style,
+                            class: "file-line {class_selected.unwrap_or_default()} {hidden_attr} {marked_file_class}",
                             onclick: move |_| {
                                 main_state.write().get_panel_state_mut(left_panel).set_selected_file(no);
                             },
@@ -149,16 +157,16 @@ pub fn Panel(left_panel: bool) -> Element {
                             },
                             td { {icon} }
                             td {
-                                div { class: "file", {file_info.name.as_str()} }
+                                div { class: "file-item", {file_info.name.as_str()} }
                             }
                             td {
-                                div { class: "file", {file_size} }
+                                div { class: "file-item file", {file_size} }
                             }
                             td {
-                                div { class: "file-date", {created} }
+                                div { class: "file-item file-date", {created} }
                             }
                             td {
-                                div { class: "file-date", {modified} }
+                                div { class: "file-item file-date", {modified} }
                             }
                         }
                     };
@@ -193,6 +201,11 @@ pub fn Panel(left_panel: bool) -> Element {
             None => disk.path.to_str().unwrap_or(""),
         };
 
+        let format = match disk.format.as_ref() {
+            Some(format) => format,
+            None => "",
+        };
+
         let name_to_show: StrOrString<'_> = if let Some(avail) = disk.avail{
             if let Some(size) = disk.size{
                 format!("{} ({} of {})", name, crate::utils::format_bytes(avail) , crate::utils::format_bytes(size)).into()
@@ -202,11 +215,19 @@ pub fn Panel(left_panel: bool) -> Element {
         }else{
             name.into()
         };
+   
 
         rsx! {
-            option { selected: panel_state.selected_volume.as_str() == name, {name_to_show.as_str()} }
+            option { selected: panel_state.selected_volume.as_str() == name,
+                {name_to_show.as_str()}
+                " [{format}]"
+            }
         }
     });
+
+
+
+    crate::utils::scroll_to_active_element();
 
     rsx! {
         div { class: "top-panel",
@@ -229,11 +250,11 @@ pub fn Panel(left_panel: bool) -> Element {
             tabindex: 1,
 
             onkeypress: move |ctx| {
-                ctx.stop_propagation();
+                ctx.prevent_default();
             },
 
             onkeydown: move |ctx| {
-                ctx.stop_propagation();
+                ctx.prevent_default();
             },
 
 
@@ -274,18 +295,30 @@ pub fn Panel(left_panel: bool) -> Element {
                                 .set_selected_file(selected_file_index - 1);
                         }
                     }
-                    _ => {}
+                    _ => {
+                        match ctx.code() {
+                            Code::Space => {
+                                main_state
+                                    .write()
+                                    .get_panel_state_mut(left_panel)
+                                    .mark_file(selected_file_index);
+                            }
+                            _ => {}
+                        }
+                    }
                 }
                 println!("Key pressed: {:?}", ctx);
             },
             table { class: "files-table",
 
-                tr { style: "position:sticky; border-bottom:1px solid var(--line-separator-color)",
-                    th {}
-                    th { "Name" }
-                    th { "Size" }
-                    th { "Created" }
-                    th { "Modified" }
+                thead {
+                    tr { style: " border-bottom:1px solid var(--line-separator-color)",
+                        th {}
+                        th { "Name" }
+                        th { "Size" }
+                        th { "Created" }
+                        th { "Modified" }
+                    }
                 }
                 {files}
             }

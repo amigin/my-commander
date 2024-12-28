@@ -9,6 +9,15 @@ pub enum FileLineType {
     Back,
 }
 
+impl FileLineType {
+    pub fn is_dir(&self) -> bool {
+        match self {
+            FileLineType::Dir => true,
+            _ => false,
+        }
+    }
+}
+
 pub struct PanelFileItem {
     pub name: String,
     pub size: u64,
@@ -16,6 +25,7 @@ pub struct PanelFileItem {
     pub modified: DateTimeAsMicroseconds,
     pub hidden: bool,
     pub tp: FileLineType,
+    pub marked: bool,
 }
 
 impl PanelFileItem {
@@ -27,6 +37,7 @@ impl PanelFileItem {
             size: 0,
             created: DateTimeAsMicroseconds::new(0),
             modified: DateTimeAsMicroseconds::new(0),
+            marked: false,
         }
     }
     pub fn new(metadata: Metadata, name: String) -> Self {
@@ -58,6 +69,7 @@ impl PanelFileItem {
             size,
             created,
             modified,
+            marked: false,
         }
     }
 }

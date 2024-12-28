@@ -14,6 +14,7 @@ pub struct PanelState {
     pub selected_volume: String,
     pub selected_path: String,
     pub selected_file_index: usize,
+    pub auto_select_dir: Option<String>,
 }
 
 impl PanelState {
@@ -23,6 +24,7 @@ impl PanelState {
             selected_volume,
             selected_path: String::new(),
             selected_file_index: 0,
+            auto_select_dir: None,
         }
     }
 
@@ -32,6 +34,39 @@ impl PanelState {
 
     pub fn set_selected_file(&mut self, no: usize) {
         self.selected_file_index = no;
+    }
+
+    pub fn mark_file(&mut self, no: usize) {
+        let files_state = self.files.unwrap_loaded_mut();
+
+        let file = files_state.files.get_mut(no);
+
+        if let Some(file) = file {
+            match file.tp {
+                super::FileLineType::Dir => {
+                    file.marked = !file.marked;
+                }
+                super::FileLineType::File => {
+                    file.marked = !file.marked;
+                }
+                super::FileLineType::Back => {}
+            }
+        }
+    }
+
+    pub fn set_files(&mut self, files: FilesState) {
+        if let Some(auto_select_dir) = &self.auto_select_dir {
+            for (index, itm) in files.files.iter().enumerate() {
+                if itm.tp.is_dir() {
+                    if itm.name.eq_ignore_ascii_case(auto_select_dir) {
+                        self.selected_file_index = index;
+                        break;
+                    }
+                }
+            }
+        }
+
+        self.files.set_loaded(files);
     }
 
     pub fn go_to_folder(&mut self, no: usize) {
@@ -46,7 +81,7 @@ impl PanelState {
         let mut path = String::new();
         mem::swap(&mut self.selected_path, &mut path);
         let mut path_segments: Vec<_> = path.split("/").collect();
-        path_segments.pop();
+        let last_segment = path_segments.pop();
 
         for segment in path_segments {
             if segment.is_empty() {
@@ -57,6 +92,7 @@ impl PanelState {
         }
 
         self.reset_files();
+        self.auto_select_dir = last_segment.map(|s| s.to_string());
     }
 
     fn reset_files(&mut self) {
