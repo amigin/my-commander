@@ -3,6 +3,7 @@ use dioxus::{desktop::*, prelude::*};
 use views::*;
 mod views;
 
+mod consts;
 mod states;
 mod utils;
 
@@ -29,18 +30,28 @@ fn app() -> Element {
 
 
 
-
-        table { style: "width:100%; height:calc(var(--app-height) - var(--bottom-panel)) ",
-            tr {
-                td { style: "width:50%; border-right: 1px solid #ccc",
-                    Panel { left_panel: true }
-                }
-                td { style: "width:50%; border-left: 1px solid #ccc",
-                    Panel { left_panel: false }
-                }
-            }
+        div { class: "left-panel",
+            Panel { left_panel: true }
         }
+        div { class: "right-panel",
+            Panel { left_panel: false }
+        }
+
+
 
         BottomPanel {}
     }
 }
+
+/*
+table { style: "width:100%; height:calc(var(--app-height) - var(--bottom-panel)) ",
+           tr {
+               td { style: "width:50vw; border-right: 1px solid #ccc",
+                   Panel { left_panel: true }
+               }
+               td { style: "width:50vw; border-left: 1px solid #ccc",
+                   Panel { left_panel: false }
+               }
+           }
+       }
+*/

@@ -15,16 +15,18 @@ pub struct PanelState {
     pub selected_path: String,
     pub selected_file_index: usize,
     pub auto_select_dir: Option<String>,
+    pub show_hidden: bool,
 }
 
 impl PanelState {
-    pub fn new(selected_volume: String) -> Self {
+    pub fn new(selected_volume: String, selected_path: String) -> Self {
         PanelState {
             files: DataState::None,
             selected_volume,
-            selected_path: String::new(),
+            selected_path,
             selected_file_index: 0,
             auto_select_dir: None,
+            show_hidden: false,
         }
     }
 
@@ -104,6 +106,10 @@ impl PanelState {
         self.selected_volume = volume;
         self.selected_path.clear();
         self.files.set_none();
+    }
+
+    pub fn click_show_hidden(&mut self) {
+        self.show_hidden = !self.show_hidden;
     }
 
     pub fn press_enter(&mut self) {

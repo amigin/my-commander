@@ -1,9 +1,8 @@
 use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
-use rust_extensions::StrOrString;
 
-use crate::{states::*, views::*};
+use crate::{consts::*, states::*, views::*};
 
 #[component]
 pub fn Panel(left_panel: bool) -> Element {
@@ -32,7 +31,8 @@ pub fn Panel(left_panel: bool) -> Element {
                     .get_panel_state_mut(left_panel)
                     .files
                     .set_loading();
-                let files = load_files(volume.as_str(), selected_path.as_str()).await;
+                let path = format!("{}{}", volume, selected_path);
+                let files = load_files(path.as_str(), selected_path.len() == 0).await;
                 match files {
                     Ok(files) => main_state
                         .write()
@@ -42,7 +42,7 @@ pub fn Panel(left_panel: bool) -> Element {
                         .write()
                         .get_panel_state_mut(left_panel)
                         .files
-                        .set_error(err),
+                        .set_error(format!("Path: {path}. Error loading files: {err}")),
                 }
             });
             rsx! { "Loading files..." }
@@ -54,8 +54,16 @@ pub fn Panel(left_panel: bool) -> Element {
             total_folders = value.folders_amount;
             total_items = value.files.len();
          
-            let mut no = 0;
-            let files = value.files.iter().map(|file_info| {
+
+            let files = value.files.iter().enumerate().filter(|itm| {
+
+                if panel_state.show_hidden{
+                    return true;
+                }
+
+                itm.1.hidden == false
+
+            }). map(|(no, file_info)| {
 
                 let item_selected = panel_state.is_file_selected(no);
                 let class_selected = if main_state_read_access.left_panel_active == left_panel{
@@ -135,45 +143,45 @@ pub fn Panel(left_panel: bool) -> Element {
                     ""
                 };
 
-                    let result = rsx! {
-                        tr {
-                            id: class_selected,
-                            style,
-                            class: "file-line {class_selected.unwrap_or_default()} {hidden_attr} {marked_file_class}",
-                            onclick: move |_| {
-                                main_state.write().get_panel_state_mut(left_panel).set_selected_file(no);
-                            },
+                  rsx! {
+                    tr {
+                        id: class_selected,
+                        style,
+                        class: "file-line {class_selected.unwrap_or_default()} {hidden_attr} {marked_file_class}",
+                        onclick: move |_| {
+                            main_state.write().get_panel_state_mut(left_panel).set_selected_file(no);
+                        },
 
-                            ondoubleclick: move |_| {
-                                match item_file_type {
-                                    FileLineType::Dir => {
-                                        main_state.write().get_panel_state_mut(left_panel).press_enter();
-                                    }
-                                    FileLineType::Back => {
-                                        main_state.write().get_panel_state_mut(left_panel).press_enter();
-                                    }
-                                    FileLineType::File => {}
+                        ondoubleclick: move |_| {
+                            match item_file_type {
+                                FileLineType::Dir => {
+                                    main_state.write().get_panel_state_mut(left_panel).press_enter();
                                 }
-                            },
-                            td { {icon} }
-                            td {
-                                div { class: "file-item", {file_info.name.as_str()} }
+                                FileLineType::Back => {
+                                    main_state.write().get_panel_state_mut(left_panel).press_enter();
+                                }
+                                FileLineType::File => {}
                             }
-                            td {
-                                div { class: "file-item file", {file_size} }
-                            }
-                            td {
-                                div { class: "file-item file-date", {created} }
-                            }
-                            td {
-                                div { class: "file-item file-date", {modified} }
+                        },
+                        td { {icon} }
+                        td {
+                            div {
+                                class: "file-item file-name",
+                                title: file_info.name.as_str(),
+                                {file_info.name.as_str()}
                             }
                         }
-                    };
-                    no+=1;
-
-                    result
-
+                        td {
+                            div { class: "file-item file", {file_size} }
+                        }
+                        td {
+                            div { class: "file-item file-date", {created} }
+                        }
+                        td {
+                            div { class: "file-item file-date", {modified} }
+                        }
+                    }
+                }
                 
             });
 
@@ -183,7 +191,7 @@ pub fn Panel(left_panel: bool) -> Element {
         }
         DataState::Error(err) => rsx! {
             div { style: "text-align:center",
-                div { "Error loading files: {err}" }
+                div { "{err}" }
                 button {
                     class: "btn btn-secondary btn-sm",
                     onclick: move |_| {
@@ -195,56 +203,42 @@ pub fn Panel(left_panel: bool) -> Element {
         },
     };
 
-    let disks = main_state_read_access.mounts.iter().map(|disk| {
-        let name = match disk.name.as_ref() {
-            Some(name) =>  name,
-            None => disk.path.to_str().unwrap_or(""),
-        };
-
-        let format = match disk.format.as_ref() {
-            Some(format) => format,
-            None => "",
-        };
-
-        let name_to_show: StrOrString<'_> = if let Some(avail) = disk.avail{
-            if let Some(size) = disk.size{
-                format!("{} ({} of {})", name, crate::utils::format_bytes(avail) , crate::utils::format_bytes(size)).into()
-            }else{
-                name.into()
-            }
-        }else{
-            name.into()
-        };
-   
-
-        rsx! {
-            option { selected: panel_state.selected_volume.as_str() == name,
-                {name_to_show.as_str()}
-                " [{format}]"
-            }
-        }
-    });
-
-
 
     crate::utils::scroll_to_active_element();
 
+    let select_disk = render_select_disk(&main_state_read_access, &panel_state, left_panel);
+
+    let show_hidden_style = if panel_state.show_hidden{
+        "btn-secondary"
+    }else{
+        "btn-light"
+    };
+
+    let panel_id = if left_panel {LEFT_PANEL_ID } else { RIGHT_PANEL_ID };
+
     rsx! {
         div { class: "top-panel",
-            select {
-                class: "form-select",
-                oninput: move |ctx| {
-                    main_state
-                        .write()
-                        .get_panel_state_mut(left_panel)
-                        .set_selected_volume(ctx.value());
-                },
-                style: "width:300px",
-                {disks}
+            table { style: "width:100%",
+                tr {
+                    td { {select_disk} }
+                    td { style: "text-align:right;",
+                        button {
+                            class: "btn {show_hidden_style} btn-sm",
+                            onclick: move |_| {
+                                main_state.write().get_panel_state_mut(left_panel).click_show_hidden();
+                            },
+                            img {
+                                class: "top-panel-ico",
+                                src: asset!("/assets/ico/hidden.svg"),
+                            }
+                        }
+                    }
+                }
             }
         }
 
         div {
+            id: panel_id,
             class: "files-panel",
             style: "  overflow-anchor: none;",
             tabindex: 1,
@@ -260,6 +254,9 @@ pub fn Panel(left_panel: bool) -> Element {
 
             onkeyup: move |ctx| {
                 match ctx.key() {
+                    Key::Tab => {
+                        main_state.write().tab_pressed();
+                    }
                     Key::Enter => {
                         if let Some(selected_file_type) = selected_file_type {
                             match selected_file_type {
@@ -335,8 +332,11 @@ pub fn Panel(left_panel: bool) -> Element {
     }
 }
 
-async fn load_files(volume: &str, selected_path: &str) -> Result<FilesState, String> {
-    let path = format!("{}{}", volume, selected_path);
+async fn load_files(path:&str, root_path: bool) -> Result<FilesState, String> {
+
+
+    println!("Loading files from path: {}", path);
+
     let mut read_dir = tokio::fs::read_dir(path)
         .await
         .map_err(|err| err.to_string())?;
@@ -379,7 +379,7 @@ async fn load_files(volume: &str, selected_path: &str) -> Result<FilesState, Str
         }
     }
 
-    if selected_path.len()>0{
+    if !root_path{
         let back = PanelFileItem::new_back();
         folders.insert(back.name.to_lowercase(), back);
     }

@@ -12,6 +12,7 @@
     user-select: none;
     /* Standard syntax */
 
+
     --line-separator-color: lightgray;
 }
 
@@ -45,7 +46,27 @@ table:focus {
 .bottom-panel {
     height: var(--bottom-panel-height);
     box-shadow: 0px 0px 3px #0000001d;
+    position: absolute;
+    bottom: 0
 }
+
+.left-panel {
+    width: calc(50vw - 1px);
+    left: 0;
+    height: calc(var(--app-height) - var(--bottom-panel));
+    position: absolute;
+    border-right: 1px solid var(--line-separator-color);
+
+}
+
+.right-panel {
+    width: 50vw;
+    left: calc(50vw + 1px);
+    height: calc(var(--app-height) - var(--bottom-panel));
+    position: absolute;
+    border-left: 1px solid var(--line-separator-color);
+}
+
 
 .files-panel {
     height: calc(var(--app-height) - var(--top-panel-height) - var(--bottom-panel-height) - var(--file-panel-footer-height));
@@ -55,10 +76,23 @@ table:focus {
 
 .file-line {
     scroll-snap-align: start;
+    white-space: nowrap;
+
+}
+
+.file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 25vw;
 }
 
 .file-marked {
     color: red;
+}
+
+.select-disk {
+    padding-left: 20px;
+    width: 350px;
 }
 
 
@@ -102,4 +136,8 @@ table:focus {
 
 .hidden {
     opacity: 0.7;
+}
+
+.top-panel-ico {
+    height: 16px;
 }

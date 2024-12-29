@@ -1,8 +1,9 @@
+use crate::consts::*;
 use dioxus::document;
 
 pub fn format_bytes(v: u64) -> String {
     if v < 1024 {
-        return format!("{}B", v);
+        return format!("{}", v);
     }
 
     let v = v as f64;
@@ -32,7 +33,23 @@ pub fn scroll_to_active_element() {
     
     setTimeout(()=>{
     document.getElementById('selected-line').scrollIntoViewIfNeeded();
-    },10);
+    },200);
     "#,
     );
+}
+
+pub fn set_panel_focus(left_panel_active: bool) {
+    let id = if left_panel_active {
+        LEFT_PANEL_ID
+    } else {
+        RIGHT_PANEL_ID
+    };
+
+    let command = format!(
+        r#"
+        document.getElementById('{id}').focus();
+        "#,
+    );
+
+    document::eval(command.as_str());
 }

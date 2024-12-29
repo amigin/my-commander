@@ -1,9 +1,7 @@
-use mountpoints::MountInfo;
-
-use super::PanelState;
+use super::{DisksState, PanelState};
 
 pub struct MainState {
-    pub mounts: Vec<MountInfo>,
+    pub disks: DisksState,
     pub left_panel: PanelState,
     pub right_panel: PanelState,
     pub left_panel_active: bool,
@@ -11,14 +9,23 @@ pub struct MainState {
 
 impl MainState {
     pub fn new() -> Self {
-        let mounts = mountpoints::mountinfos().unwrap();
-        let selected_volume = mounts.first().unwrap().path.to_str().unwrap().to_string();
+        let disks = DisksState::new();
+        let (selected_volume, selected_path) = {
+            let item = disks.iter().next().unwrap();
+
+            (item.path.to_string(), item.default_path.to_string())
+        };
         MainState {
-            mounts,
-            left_panel: PanelState::new(selected_volume.clone()),
-            right_panel: PanelState::new(selected_volume.clone()),
+            disks,
+            left_panel: PanelState::new(selected_volume.clone(), selected_path.to_string()),
+            right_panel: PanelState::new(selected_volume, selected_path),
             left_panel_active: true,
         }
+    }
+
+    pub fn tab_pressed(&mut self) {
+        self.left_panel_active = !self.left_panel_active;
+        crate::utils::set_panel_focus(self.left_panel_active);
     }
 
     pub fn get_panel_state(&self, left_panel: bool) -> &PanelState {
