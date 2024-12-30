@@ -25,6 +25,7 @@ pub fn Panel(left_panel: bool) -> Element {
         DataState::None => {
             let volume = panel_state.selected_volume.to_string();
             let selected_path = panel_state.selected_path.clone();
+            let show_hidden = panel_state.show_hidden;
             spawn(async move {
                 main_state
                     .write()
@@ -32,7 +33,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     .files
                     .set_loading();
                 let path = format!("{}{}", volume, selected_path);
-                let files = load_files(path.as_str(), selected_path.len() == 0).await;
+                let files = load_files(path.as_str(), selected_path.len() == 0, show_hidden).await;
                 match files {
                     Ok(files) => main_state
                         .write()
@@ -57,11 +58,14 @@ pub fn Panel(left_panel: bool) -> Element {
 
             let files = value.files.iter().enumerate().filter(|itm| {
 
-                if panel_state.show_hidden{
-                    return true;
+                if panel_state.search.len()>0{
+                    if !itm.1.name.to_lowercase().contains(&panel_state.search){
+                        return false;
+                    }
                 }
 
-                itm.1.hidden == false
+                true
+
 
             }). map(|(no, file_info)| {
 
@@ -84,7 +88,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     selected_file_type = Some(file_info.tp);
                 }
 
-                let (icon, created, modified, file_size) = match file_info.tp{
+                let (icon, created, modified) = match file_info.tp{
                     FileLineType::Dir => {
                         let icon = rsx! {
                             img {
@@ -95,7 +99,8 @@ pub fn Panel(left_panel: bool) -> Element {
 
                         let created = file_info.created.to_rfc5322();
                         let modified = file_info.modified.to_rfc5322();
-                        (icon, created, modified, crate::utils::format_bytes(file_info.size))
+
+                        (icon, created, modified)
                     },
                     FileLineType::File => 
                     {
@@ -103,7 +108,7 @@ pub fn Panel(left_panel: bool) -> Element {
                       let created = file_info.created.to_rfc5322();
                       let modified = file_info.modified.to_rfc5322();
 
-                      (icon, created, modified, crate::utils::format_bytes(file_info.size))
+                      (icon, created, modified)
                     },
                     FileLineType::Back => {
                         let icon = rsx! {
@@ -114,7 +119,7 @@ pub fn Panel(left_panel: bool) -> Element {
                         } ;
 
 
-                        (icon, String::new(), String::new(), String::new())
+                        (icon, String::new(), String::new())
                     },
                 };
            
@@ -172,7 +177,9 @@ pub fn Panel(left_panel: bool) -> Element {
                             }
                         }
                         td {
-                            div { class: "file-item file", {file_size} }
+                            div { class: "file-item file",
+                                {file_info.size.get_formatted_size_as_string()}
+                            }
                         }
                         td {
                             div { class: "file-item file-date", {created} }
@@ -216,12 +223,27 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let panel_id = if left_panel {LEFT_PANEL_ID } else { RIGHT_PANEL_ID };
 
+
+    let search_ico =asset!("/assets/ico/search.svg");
+
     rsx! {
         div { class: "top-panel",
             table { style: "width:100%",
                 tr {
                     td { {select_disk} }
                     td { style: "text-align:right;",
+                        div { style: "display:inline-block",
+                            input {
+                                class: "search-input",
+                                style: "background-image: url(\"{search_ico}\")",
+                                oninput: move |ctx| {
+                                    main_state.write().get_panel_state_mut(left_panel).search = ctx
+                                        .value()
+                                        .to_lowercase();
+                                },
+                                value: panel_state.search.as_str(),
+                            }
+                        }
                         button {
                             class: "btn {show_hidden_style} btn-sm",
                             onclick: move |_| {
@@ -332,10 +354,7 @@ pub fn Panel(left_panel: bool) -> Element {
     }
 }
 
-async fn load_files(path:&str, root_path: bool) -> Result<FilesState, String> {
-
-
-    println!("Loading files from path: {}", path);
+async fn load_files(path:&str, root_path: bool, show_hidden: bool) -> Result<FilesState, String> {
 
     let mut read_dir = tokio::fs::read_dir(path)
         .await
@@ -364,7 +383,11 @@ async fn load_files(path:&str, root_path: bool) -> Result<FilesState, String> {
         let metadata = next_entry.metadata().await.map_err(|err| err.to_string())?;
         let file_info = PanelFileItem::new(metadata, name);
 
-        result.total_size += file_info.size;
+        if !show_hidden && file_info.hidden {
+            continue;
+        }
+
+        result.total_size += file_info.size.get_size();
 
         match file_info.tp{
             FileLineType::Dir => {

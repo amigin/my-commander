@@ -141,3 +141,15 @@ table:focus {
 .top-panel-ico {
     height: 16px;
 }
+
+.search-input {
+    border: 1px solid var(--line-separator-color);
+    border-radius: 5px;
+    padding: 2px;
+    margin-right: 4px;
+    padding-left: 26px;
+    background-position-x: 2px;
+    background-position-y: middle;
+    background-size: contain;
+    background-repeat: no-repeat;
+}

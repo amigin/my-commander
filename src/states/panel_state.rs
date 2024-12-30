@@ -2,6 +2,34 @@ use std::mem;
 
 use super::{DataState, PanelFileItem};
 
+pub enum AutoSelectElement {
+    None,
+    Dir(String),
+    File(String),
+}
+
+impl AutoSelectElement {
+    pub fn set_dir_to_auto_select(name: Option<String>) -> Self {
+        match name {
+            Some(name) => Self::Dir(name),
+            None => Self::None,
+        }
+    }
+
+    pub fn set_auto_select(el: Option<&PanelFileItem>) -> Self {
+        if el.is_none() {
+            return Self::None;
+        }
+
+        let el = el.unwrap();
+        match el.tp {
+            super::FileLineType::Dir => Self::Dir(el.name.clone()),
+            super::FileLineType::File => Self::File(el.name.clone()),
+            super::FileLineType::Back => Self::None,
+        }
+    }
+}
+
 pub struct FilesState {
     pub files: Vec<PanelFileItem>,
     pub total_size: u64,
@@ -14,8 +42,9 @@ pub struct PanelState {
     pub selected_volume: String,
     pub selected_path: String,
     pub selected_file_index: usize,
-    pub auto_select_dir: Option<String>,
+    pub auto_select_after_load: AutoSelectElement,
     pub show_hidden: bool,
+    pub search: String,
 }
 
 impl PanelState {
@@ -25,8 +54,9 @@ impl PanelState {
             selected_volume,
             selected_path,
             selected_file_index: 0,
-            auto_select_dir: None,
+            auto_select_after_load: AutoSelectElement::None,
             show_hidden: false,
+            search: String::new(),
         }
     }
 
@@ -57,12 +87,25 @@ impl PanelState {
     }
 
     pub fn set_files(&mut self, files: FilesState) {
-        if let Some(auto_select_dir) = &self.auto_select_dir {
-            for (index, itm) in files.files.iter().enumerate() {
-                if itm.tp.is_dir() {
-                    if itm.name.eq_ignore_ascii_case(auto_select_dir) {
-                        self.selected_file_index = index;
-                        break;
+        match &self.auto_select_after_load {
+            AutoSelectElement::None => {}
+            AutoSelectElement::Dir(name_to_auto_select) => {
+                for (index, itm) in files.files.iter().enumerate() {
+                    if itm.tp.is_dir() {
+                        if itm.name.eq_ignore_ascii_case(name_to_auto_select) {
+                            self.selected_file_index = index;
+                            break;
+                        }
+                    }
+                }
+            }
+            AutoSelectElement::File(name_to_auto_select) => {
+                for (index, itm) in files.files.iter().enumerate() {
+                    if !itm.tp.is_dir() {
+                        if itm.name.eq_ignore_ascii_case(name_to_auto_select) {
+                            self.selected_file_index = index;
+                            break;
+                        }
                     }
                 }
             }
@@ -77,6 +120,7 @@ impl PanelState {
 
         self.selected_path.push_str(&item.name);
         self.reset_files();
+        self.search.clear();
     }
 
     pub fn go_back(&mut self) {
@@ -84,6 +128,7 @@ impl PanelState {
         mem::swap(&mut self.selected_path, &mut path);
         let mut path_segments: Vec<_> = path.split("/").collect();
         let last_segment = path_segments.pop();
+        self.search.clear();
 
         for segment in path_segments {
             if segment.is_empty() {
@@ -94,7 +139,8 @@ impl PanelState {
         }
 
         self.reset_files();
-        self.auto_select_dir = last_segment.map(|s| s.to_string());
+        self.auto_select_after_load =
+            AutoSelectElement::set_dir_to_auto_select(last_segment.map(|s| s.to_string()));
     }
 
     fn reset_files(&mut self) {
@@ -109,6 +155,16 @@ impl PanelState {
     }
 
     pub fn click_show_hidden(&mut self) {
+        match &self.files {
+            DataState::Loaded(files) => {
+                let item = files.files.get(self.selected_file_index);
+                self.auto_select_after_load = AutoSelectElement::set_auto_select(item);
+            }
+            _ => {
+                self.auto_select_after_load = AutoSelectElement::None;
+            }
+        }
+        self.files.set_none();
         self.show_hidden = !self.show_hidden;
     }
 

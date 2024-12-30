@@ -78,9 +78,67 @@ pub fn render_icon(file_name: &str) -> Element {
                 img { class: "file-ico", src: asset!("/assets/ico/docx.svg") }
             };
         }
+
+        if ext.eq_ignore_ascii_case("dmg") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/iso.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("iso") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/iso.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("pkg") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/iso.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("htm") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/html.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("html") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/html.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("mov") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/mov.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("rar") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/rar.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("xlsx") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/xsl.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("xsl") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/xsl.svg") }
+            };
+        }
     }
 
     rsx! {
-        img { class: "file-ico", src: asset!("/assets/ico/file.svg") }
+        img {
+            class: "file-ico",
+            style: "padding-left: 3px",
+            src: asset!("/assets/ico/file.svg"),
+        }
     }
 }

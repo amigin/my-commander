@@ -18,9 +18,33 @@ impl FileLineType {
     }
 }
 
+pub enum FileItemSize {
+    Unknown,
+    Calculating(u64),
+    Known(u64),
+}
+
+impl FileItemSize {
+    pub fn get_size(&self) -> u64 {
+        match self {
+            FileItemSize::Unknown => 0,
+            FileItemSize::Calculating(size) => *size,
+            FileItemSize::Known(size) => *size,
+        }
+    }
+
+    pub fn get_formatted_size_as_string(&self) -> String {
+        match self {
+            FileItemSize::Unknown => String::new(),
+            FileItemSize::Calculating(size) => crate::utils::format_bytes(*size),
+            FileItemSize::Known(size) => crate::utils::format_bytes(*size),
+        }
+    }
+}
+
 pub struct PanelFileItem {
     pub name: String,
-    pub size: u64,
+    pub size: FileItemSize,
     pub created: DateTimeAsMicroseconds,
     pub modified: DateTimeAsMicroseconds,
     pub hidden: bool,
@@ -34,7 +58,7 @@ impl PanelFileItem {
             tp: FileLineType::Back,
             hidden: false,
             name: "..".to_string(),
-            size: 0,
+            size: FileItemSize::Unknown,
             created: DateTimeAsMicroseconds::new(0),
             modified: DateTimeAsMicroseconds::new(0),
             marked: false,
@@ -58,15 +82,20 @@ impl PanelFileItem {
                 .unwrap()
                 .as_micros() as i64,
         );
+        let is_dir = metadata.is_dir();
         Self {
-            tp: if metadata.is_dir() {
+            tp: if is_dir {
                 FileLineType::Dir
             } else {
                 FileLineType::File
             },
             hidden: name.starts_with("."),
             name,
-            size,
+            size: if is_dir {
+                FileItemSize::Unknown
+            } else {
+                FileItemSize::Known(size)
+            },
             created,
             modified,
             marked: false,

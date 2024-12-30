@@ -8,3 +8,5 @@ mod panel_file_item;
 pub use panel_file_item::*;
 mod disks_state;
 pub use disks_state::*;
+mod persistence_state;
+pub use persistence_state::*;

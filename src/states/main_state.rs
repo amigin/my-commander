@@ -1,10 +1,11 @@
-use super::{DisksState, PanelState};
+use super::{DataState, DisksState, PanelState, PersistenceState};
 
 pub struct MainState {
     pub disks: DisksState,
     pub left_panel: PanelState,
     pub right_panel: PanelState,
     pub left_panel_active: bool,
+    pub persistence_state: DataState<PersistenceState>,
 }
 
 impl MainState {
@@ -20,6 +21,7 @@ impl MainState {
             left_panel: PanelState::new(selected_volume.clone(), selected_path.to_string()),
             right_panel: PanelState::new(selected_volume, selected_path),
             left_panel_active: true,
+            persistence_state: DataState::None,
         }
     }
 

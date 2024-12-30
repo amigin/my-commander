@@ -25,4 +25,8 @@ impl<T> DataState<T> {
             _ => panic!("DataState is not loaded"),
         }
     }
+
+    pub fn as_ref(&self) -> &Self {
+        self
+    }
 }
