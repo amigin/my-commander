@@ -1,5 +1,4 @@
 use serde::*;
-use std::collections::HashMap;
 use tokio::sync::Mutex;
 
 lazy_static::lazy_static! {
@@ -18,15 +17,20 @@ lazy_static::lazy_static! {
         Mutex::new(result)
     };
 }
+#[derive(Default, Serialize, Deserialize, Clone)]
+pub struct VolumeAndPathPersistenceState {
+    pub volume: String,
+    pub path: String,
+}
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct PanelPersistenceState {
     pub show_hidden_files: bool,
+    pub active: Option<VolumeAndPathPersistenceState>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct PersistenceState {
-    pub selected_paths: HashMap<String, bool>,
     pub left_panel: PanelPersistenceState,
     pub right_panel: PanelPersistenceState,
 }

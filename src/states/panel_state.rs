@@ -2,7 +2,10 @@ use std::{collections::HashMap, rc::Rc, sync::Arc};
 
 use dioxus::prelude::*;
 
-use crate::{scripts::DirSizeCalculationHandler, volume_path_and_file::VolumePathAndFile};
+use crate::{
+    background_tasks::DirSizeCalculationHandler, volume_path_and_file::VolumePathAndFile,
+    BackgroundTask,
+};
 
 use super::{DataState, PanelFileItem};
 
@@ -48,25 +51,26 @@ pub struct PanelState {
     pub left_panel: bool,
     calculations: HashMap<String, Arc<DirSizeCalculationHandler>>,
 
-    pub size_calculator: Rc<Coroutine<Arc<DirSizeCalculationHandler>>>,
+    pub background_tasks: Rc<Coroutine<BackgroundTask>>,
 }
 
 impl PanelState {
     pub fn new(
-        size_calculator: Rc<Coroutine<Arc<DirSizeCalculationHandler>>>,
+        background_tasks: Rc<Coroutine<BackgroundTask>>,
         volume_and_path: VolumePathAndFile,
         left_panel: bool,
+        show_hidden: bool,
     ) -> Self {
         PanelState {
             files: DataState::None,
             volume_and_path,
             selected_file_index: 0,
             auto_select_after_load: AutoSelectElement::None,
-            show_hidden: false,
+            show_hidden,
             search: String::new(),
             left_panel,
             calculations: HashMap::new(),
-            size_calculator,
+            background_tasks,
         }
     }
 
@@ -98,7 +102,8 @@ impl PanelState {
                             ));
 
                             println!("Sending size calculator to thread");
-                            self.size_calculator.send(size_calculator_handler.clone());
+                            self.background_tasks
+                                .send(size_calculator_handler.clone().into());
                             return PressSpaceActionResult::StartCalculation(
                                 size_calculator_handler,
                             );
@@ -203,7 +208,7 @@ impl PanelState {
         self.files.set_none();
     }
 
-    pub fn click_show_hidden(&mut self) {
+    pub fn click_show_hidden(&mut self) -> bool {
         match &self.files {
             DataState::Loaded(files) => {
                 let item = files.files.get(self.selected_file_index);
@@ -215,9 +220,10 @@ impl PanelState {
         }
         self.files.set_none();
         self.show_hidden = !self.show_hidden;
+        self.show_hidden
     }
 
-    pub fn press_enter(&mut self) {
+    pub fn press_enter(&mut self) -> bool {
         let tp = self
             .files
             .unwrap_loaded_mut()
@@ -228,10 +234,12 @@ impl PanelState {
         match tp {
             super::FileLineType::Dir => {
                 self.go_to_folder(self.selected_file_index);
+                true
             }
-            super::FileLineType::File => {}
+            super::FileLineType::File => false,
             super::FileLineType::Back => {
                 self.go_back();
+                true
             }
         }
     }

@@ -1,8 +1,8 @@
-use std::{rc::Rc, sync::Arc};
+use std::rc::Rc;
 
-use crate::{scripts::DirSizeCalculationHandler, volume_path_and_file::VolumePathAndFile};
+use crate::{volume_path_and_file::VolumePathAndFile, BackgroundTask};
 
-use super::{DisksState, PanelState, PersistenceState};
+use super::*;
 use dioxus::prelude::*;
 
 pub struct MainState {
@@ -11,28 +11,60 @@ pub struct MainState {
     pub right_panel: PanelState,
     pub left_panel_active: bool,
     pub persistence_state: PersistenceState,
+    background_tasks: Rc<Coroutine<BackgroundTask>>,
 }
 
 impl MainState {
     pub fn new(
         persistence_state: PersistenceState,
-        size_calculator: Coroutine<Arc<DirSizeCalculationHandler>>,
+        background_tasks: Coroutine<BackgroundTask>,
     ) -> Self {
         let disks = DisksState::new();
-        let volume_and_path = {
-            let item = disks.iter().next().unwrap();
-
-            VolumePathAndFile::new_with_path(item.path.to_string(), item.default_path.as_str())
+        let disk_info = disks.iter().next().unwrap();
+        let left_volume_and_path = {
+            if let Some(persistence) = persistence_state.left_panel.active.as_ref() {
+                VolumePathAndFile::new_with_path(persistence.volume.to_string(), &persistence.path)
+            } else {
+                VolumePathAndFile::new_with_path(
+                    disk_info.path.to_string(),
+                    disk_info.default_path.as_str(),
+                )
+            }
         };
 
-        let size_calculator = Rc::new(size_calculator);
+        let right_volume_and_path = {
+            if let Some(persistence) = persistence_state.right_panel.active.as_ref() {
+                VolumePathAndFile::new_with_path(
+                    persistence.volume.to_string(),
+                    persistence.path.as_str(),
+                )
+            } else {
+                VolumePathAndFile::new_with_path(
+                    disk_info.path.to_string(),
+                    disk_info.default_path.as_str(),
+                )
+            }
+        };
+
+        let background_tasks = Rc::new(background_tasks);
 
         MainState {
             disks,
-            left_panel: PanelState::new(size_calculator.clone(), volume_and_path.clone(), true),
-            right_panel: PanelState::new(size_calculator, volume_and_path, false),
+            left_panel: PanelState::new(
+                background_tasks.clone(),
+                left_volume_and_path,
+                true,
+                persistence_state.left_panel.show_hidden_files,
+            ),
+            right_panel: PanelState::new(
+                background_tasks.clone(),
+                right_volume_and_path,
+                false,
+                persistence_state.right_panel.show_hidden_files,
+            ),
             left_panel_active: true,
             persistence_state,
+            background_tasks,
         }
     }
 
@@ -64,5 +96,48 @@ impl MainState {
         } else {
             self.right_panel.volume_and_path.get_path()
         }
+    }
+
+    pub fn press_enter(&mut self, left_panel: bool) {
+        let has_update = {
+            let active_panel = self.get_panel_state_mut(left_panel);
+            active_panel.press_enter()
+        };
+
+        if has_update {
+            let persistence_state = {
+                let panel_state = self.get_panel_state(left_panel);
+
+                VolumeAndPathPersistenceState {
+                    volume: panel_state.volume_and_path.get_volume().to_string(),
+                    path: panel_state.volume_and_path.get_path().to_string(),
+                }
+            };
+
+            if left_panel {
+                self.persistence_state.left_panel.active = Some(persistence_state);
+            } else {
+                self.persistence_state.right_panel.active = Some(persistence_state);
+            }
+
+            self.background_tasks
+                .send(BackgroundTask::SaveState(self.persistence_state.clone()));
+        }
+    }
+
+    pub fn click_show_hidden(&mut self, left_panel: bool) {
+        let value = {
+            let active_panel = self.get_panel_state_mut(left_panel);
+            active_panel.click_show_hidden()
+        };
+
+        if left_panel {
+            self.persistence_state.left_panel.show_hidden_files = value;
+        } else {
+            self.persistence_state.right_panel.show_hidden_files = value;
+        }
+
+        self.background_tasks
+            .send(BackgroundTask::SaveState(self.persistence_state.clone()));
     }
 }

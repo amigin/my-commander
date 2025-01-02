@@ -1,13 +1,11 @@
-use std::sync::Arc;
-
 use dioxus::{desktop::*, prelude::*};
 
-use scripts::DirSizeCalculationHandler;
+use background_tasks::*;
 use views::*;
 mod views;
 
+mod background_tasks;
 mod consts;
-mod scripts;
 mod states;
 mod utils;
 mod volume_path_and_file;
@@ -61,14 +59,19 @@ fn app() -> Element {
     };
 
     let tx = use_coroutine(
-        move |mut rx: UnboundedReceiver<Arc<DirSizeCalculationHandler>>| async move {
+        move |mut rx: UnboundedReceiver<BackgroundTask>| async move {
             println!("Starting size calculator coroutine");
             let mut main_state = consume_context::<Signal<MainState>>();
             loop {
-                if let Some(handler) = rx.next().await {
-                    println!("Got event to calculate size");
-
-                    crate::scripts::calc_dir_size(handler, &mut main_state).await;
+                if let Some(task) = rx.next().await {
+                    match task {
+                        BackgroundTask::CalcDirSize(task) => {
+                            crate::background_tasks::calc_dir_size(task, &mut main_state).await
+                        }
+                        BackgroundTask::SaveState(state) => {
+                            crate::background_tasks::save_state(state).await
+                        }
+                    };
                 }
             }
         },

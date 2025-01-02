@@ -173,10 +173,10 @@ pub fn Panel(left_panel: bool) -> Element {
                         ondoubleclick: move |_| {
                             match item_file_type {
                                 FileLineType::Dir => {
-                                    main_state.write().get_panel_state_mut(left_panel).press_enter();
+                                    main_state.write().press_enter(left_panel);
                                 }
                                 FileLineType::Back => {
-                                    main_state.write().get_panel_state_mut(left_panel).press_enter();
+                                    main_state.write().press_enter(left_panel);
                                 }
                                 FileLineType::File => {}
                             }
@@ -261,7 +261,7 @@ pub fn Panel(left_panel: bool) -> Element {
                         button {
                             class: "btn {show_hidden_style} btn-sm",
                             onclick: move |_| {
-                                main_state.write().get_panel_state_mut(left_panel).click_show_hidden();
+                                main_state.write().click_show_hidden(left_panel);
                             },
                             img {
                                 class: "top-panel-ico",
@@ -297,16 +297,10 @@ pub fn Panel(left_panel: bool) -> Element {
                         if let Some(selected_file_type) = selected_file_type {
                             match selected_file_type {
                                 FileLineType::Dir => {
-                                    main_state
-                                        .write()
-                                        .get_panel_state_mut(left_panel)
-                                        .press_enter();
+                                    main_state.write().press_enter(left_panel);
                                 }
                                 FileLineType::Back => {
-                                    main_state
-                                        .write()
-                                        .get_panel_state_mut(left_panel)
-                                        .press_enter();
+                                    main_state.write().press_enter(left_panel);
                                 }
                                 FileLineType::File => {}
                             }
