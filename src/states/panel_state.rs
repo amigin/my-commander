@@ -1,4 +1,8 @@
-use std::mem;
+use std::{collections::HashMap, rc::Rc, sync::Arc};
+
+use dioxus::prelude::*;
+
+use crate::{scripts::DirSizeCalculationHandler, volume_path_and_file::VolumePathAndFile};
 
 use super::{DataState, PanelFileItem};
 
@@ -9,11 +13,8 @@ pub enum AutoSelectElement {
 }
 
 impl AutoSelectElement {
-    pub fn set_dir_to_auto_select(name: Option<String>) -> Self {
-        match name {
-            Some(name) => Self::Dir(name),
-            None => Self::None,
-        }
+    pub fn set_dir_to_auto_select(name: String) -> Self {
+        Self::Dir(name.into())
     }
 
     pub fn set_auto_select(el: Option<&PanelFileItem>) -> Self {
@@ -23,8 +24,8 @@ impl AutoSelectElement {
 
         let el = el.unwrap();
         match el.tp {
-            super::FileLineType::Dir => Self::Dir(el.name.clone()),
-            super::FileLineType::File => Self::File(el.name.clone()),
+            super::FileLineType::Dir => Self::Dir(el.name.clone().into()),
+            super::FileLineType::File => Self::File(el.name.clone().into()),
             super::FileLineType::Back => Self::None,
         }
     }
@@ -39,24 +40,33 @@ pub struct FilesState {
 
 pub struct PanelState {
     pub files: DataState<FilesState>,
-    pub selected_volume: String,
-    pub selected_path: String,
+    pub volume_and_path: VolumePathAndFile,
     pub selected_file_index: usize,
     pub auto_select_after_load: AutoSelectElement,
     pub show_hidden: bool,
     pub search: String,
+    pub left_panel: bool,
+    calculations: HashMap<String, Arc<DirSizeCalculationHandler>>,
+
+    pub size_calculator: Rc<Coroutine<Arc<DirSizeCalculationHandler>>>,
 }
 
 impl PanelState {
-    pub fn new(selected_volume: String, selected_path: String) -> Self {
+    pub fn new(
+        size_calculator: Rc<Coroutine<Arc<DirSizeCalculationHandler>>>,
+        volume_and_path: VolumePathAndFile,
+        left_panel: bool,
+    ) -> Self {
         PanelState {
             files: DataState::None,
-            selected_volume,
-            selected_path,
+            volume_and_path,
             selected_file_index: 0,
             auto_select_after_load: AutoSelectElement::None,
             show_hidden: false,
             search: String::new(),
+            left_panel,
+            calculations: HashMap::new(),
+            size_calculator,
         }
     }
 
@@ -68,7 +78,7 @@ impl PanelState {
         self.selected_file_index = no;
     }
 
-    pub fn mark_file(&mut self, no: usize) {
+    fn mark_file_or_dir(&mut self, no: usize) -> PressSpaceActionResult {
         let files_state = self.files.unwrap_loaded_mut();
 
         let file = files_state.files.get_mut(no);
@@ -77,12 +87,56 @@ impl PanelState {
             match file.tp {
                 super::FileLineType::Dir => {
                     file.marked = !file.marked;
+
+                    if file.marked {
+                        if file.size.is_unknown() {
+                            file.size = super::FileItemSize::Calculating(0);
+
+                            let size_calculator_handler = Arc::new(DirSizeCalculationHandler::new(
+                                self.volume_and_path.new_with_segment(&file.name),
+                                self.left_panel,
+                            ));
+
+                            println!("Sending size calculator to thread");
+                            self.size_calculator.send(size_calculator_handler.clone());
+                            return PressSpaceActionResult::StartCalculation(
+                                size_calculator_handler,
+                            );
+                        }
+                    } else {
+                        if !file.size.is_known() {
+                            let dir = self.volume_and_path.new_with_segment(&file.name);
+                            file.size = super::FileItemSize::Unknown;
+                            return PressSpaceActionResult::StopCalculation(dir);
+                        }
+                    }
                 }
                 super::FileLineType::File => {
                     file.marked = !file.marked;
                 }
                 super::FileLineType::Back => {}
             }
+        }
+
+        PressSpaceActionResult::DoNothing
+    }
+
+    pub fn space_pressed(&mut self, no: usize) {
+        match self.mark_file_or_dir(no) {
+            PressSpaceActionResult::StartCalculation(handler) => {
+                let key = handler.dir.to_string();
+                println!("Inserting calculation with key: {}", key);
+                self.calculations.insert(key, handler);
+            }
+            PressSpaceActionResult::StopCalculation(file_and_path) => {
+                let key = file_and_path.into_string();
+                println!("Removing calculation with key: {}", key);
+                if let Some(item) = self.calculations.remove(&key) {
+                    println!("Cancelling calculation for dir: {}", key);
+                    item.cancel();
+                }
+            }
+            PressSpaceActionResult::DoNothing => {}
         }
     }
 
@@ -114,33 +168,29 @@ impl PanelState {
         self.files.set_loaded(files);
     }
 
+    fn cancel_dir_size_calculation(&mut self) {
+        for (_, calc) in self.calculations.drain() {
+            calc.cancel();
+        }
+    }
+
     pub fn go_to_folder(&mut self, no: usize) {
         let item = self.files.unwrap_loaded_mut().files.remove(no);
-        self.selected_path.push(std::path::MAIN_SEPARATOR);
+        self.volume_and_path.append_segment(&item.name);
 
-        self.selected_path.push_str(&item.name);
         self.reset_files();
         self.search.clear();
+        self.cancel_dir_size_calculation();
     }
 
     pub fn go_back(&mut self) {
-        let mut path = String::new();
-        mem::swap(&mut self.selected_path, &mut path);
-        let mut path_segments: Vec<_> = path.split("/").collect();
-        let last_segment = path_segments.pop();
+        let item = self.volume_and_path.go_back().unwrap();
+
         self.search.clear();
 
-        for segment in path_segments {
-            if segment.is_empty() {
-                continue;
-            }
-            self.selected_path.push(std::path::MAIN_SEPARATOR);
-            self.selected_path.push_str(segment);
-        }
-
         self.reset_files();
-        self.auto_select_after_load =
-            AutoSelectElement::set_dir_to_auto_select(last_segment.map(|s| s.to_string()));
+        self.auto_select_after_load = AutoSelectElement::set_dir_to_auto_select(item);
+        self.cancel_dir_size_calculation();
     }
 
     fn reset_files(&mut self) {
@@ -149,8 +199,7 @@ impl PanelState {
     }
 
     pub fn set_selected_volume(&mut self, volume: String) {
-        self.selected_volume = volume;
-        self.selected_path.clear();
+        self.volume_and_path = VolumePathAndFile::new(volume);
         self.files.set_none();
     }
 
@@ -186,4 +235,48 @@ impl PanelState {
             }
         }
     }
+
+    fn find_calculated_dir(
+        &mut self,
+        dir: &VolumePathAndFile,
+        found_dir: impl Fn(&mut PanelFileItem),
+    ) {
+        let (volume_and_path, dir) = dir.get_last_segment().unwrap();
+
+        if self.volume_and_path.as_str() != volume_and_path {
+            return;
+        }
+
+        if let DataState::Loaded(files) = &mut self.files {
+            for itm in files.files.iter_mut() {
+                if itm.tp.is_dir() {
+                    if itm.name.eq_ignore_ascii_case(dir) {
+                        found_dir(itm);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn set_dir_size_unknown(&mut self, dir: &VolumePathAndFile) {
+        self.find_calculated_dir(dir, |itm| {
+            itm.size = super::FileItemSize::Unknown;
+        });
+    }
+    pub fn set_dir_size(&mut self, dir: &VolumePathAndFile, size: u64, known: bool) {
+        self.find_calculated_dir(dir, |itm| {
+            if known {
+                itm.size = super::FileItemSize::Known(size);
+            } else {
+                itm.size = super::FileItemSize::Calculating(size);
+            }
+        });
+    }
+}
+
+pub enum PressSpaceActionResult {
+    StartCalculation(Arc<DirSizeCalculationHandler>),
+    StopCalculation(VolumePathAndFile),
+    DoNothing,
 }

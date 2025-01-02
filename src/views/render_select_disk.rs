@@ -9,7 +9,7 @@ pub fn render_select_disk(
     let disks = main_state_read_access.disks.iter().map(|disk| {
         rsx! {
             option {
-                selected: panel_state.selected_volume.as_str() == disk.path.as_str(),
+                selected: panel_state.volume_and_path.get_volume() == disk.path.as_str(),
                 value: disk.path.as_str(),
                 {disk.get_display_name()}
             }

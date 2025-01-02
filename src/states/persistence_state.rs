@@ -19,12 +19,12 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct PanelPersistenceState {
     pub show_hidden_files: bool,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct PersistenceState {
     pub selected_paths: HashMap<String, bool>,
     pub left_panel: PanelPersistenceState,

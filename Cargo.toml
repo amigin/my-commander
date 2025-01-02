@@ -13,6 +13,8 @@ serde = { version = "*", features = ["derive"] }
 serde_yaml = "*"
 lazy_static = "*"
 
+futures-util = "*"
+
 [profile]
 
 [profile.wasm-dev]

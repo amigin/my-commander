@@ -23,8 +23,7 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let files = match &panel_state.files {
         DataState::None => {
-            let volume = panel_state.selected_volume.to_string();
-            let selected_path = panel_state.selected_path.clone();
+            let volume_and_path = panel_state.volume_and_path.clone();
             let show_hidden = panel_state.show_hidden;
             spawn(async move {
                 main_state
@@ -32,8 +31,9 @@ pub fn Panel(left_panel: bool) -> Element {
                     .get_panel_state_mut(left_panel)
                     .files
                     .set_loading();
-                let path = format!("{}{}", volume, selected_path);
-                let files = load_files(path.as_str(), selected_path.len() == 0, show_hidden).await;
+                let path = volume_and_path.get_path();
+                
+                let files = load_files(volume_and_path.as_str(), path.len() == 0, show_hidden).await;
                 match files {
                     Ok(files) => main_state
                         .write()
@@ -140,6 +140,19 @@ pub fn Panel(left_panel: bool) -> Element {
                     modified.as_str()
                 };
 
+                let calc_icon = if file_info.size.is_calculating(){
+                    rsx!{
+                        div { style: "width:16px; position: relative; top:3px;",
+                            span { class: "loader" }
+                        }
+                    }
+
+                }else{
+                    rsx!{
+                        div { style: "width:16px;" }
+                    }
+                };
+
                 let item_file_type = file_info.tp;
 
                 let style = if no == 0{
@@ -176,6 +189,7 @@ pub fn Panel(left_panel: bool) -> Element {
                                 {file_info.name.as_str()}
                             }
                         }
+                        td { {calc_icon} }
                         td {
                             div { class: "file-item file",
                                 {file_info.size.get_formatted_size_as_string()}
@@ -320,7 +334,7 @@ pub fn Panel(left_panel: bool) -> Element {
                                 main_state
                                     .write()
                                     .get_panel_state_mut(left_panel)
-                                    .mark_file(selected_file_index);
+                                    .space_pressed(selected_file_index);
                             }
                             _ => {}
                         }
@@ -334,6 +348,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     tr { style: " border-bottom:1px solid var(--line-separator-color)",
                         th {}
                         th { "Name" }
+                        th {}
                         th { "Size" }
                         th { "Created" }
                         th { "Modified" }

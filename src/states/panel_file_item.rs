@@ -25,6 +25,29 @@ pub enum FileItemSize {
 }
 
 impl FileItemSize {
+    pub fn is_unknown(&self) -> bool {
+        match self {
+            FileItemSize::Unknown => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_calculating(&self) -> bool {
+        match self {
+            FileItemSize::Calculating(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_known(&self) -> bool {
+        match self {
+            FileItemSize::Known(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl FileItemSize {
     pub fn get_size(&self) -> u64 {
         match self {
             FileItemSize::Unknown => 0,

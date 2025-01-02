@@ -1,27 +1,38 @@
-use super::{DataState, DisksState, PanelState, PersistenceState};
+use std::{rc::Rc, sync::Arc};
+
+use crate::{scripts::DirSizeCalculationHandler, volume_path_and_file::VolumePathAndFile};
+
+use super::{DisksState, PanelState, PersistenceState};
+use dioxus::prelude::*;
 
 pub struct MainState {
     pub disks: DisksState,
     pub left_panel: PanelState,
     pub right_panel: PanelState,
     pub left_panel_active: bool,
-    pub persistence_state: DataState<PersistenceState>,
+    pub persistence_state: PersistenceState,
 }
 
 impl MainState {
-    pub fn new() -> Self {
+    pub fn new(
+        persistence_state: PersistenceState,
+        size_calculator: Coroutine<Arc<DirSizeCalculationHandler>>,
+    ) -> Self {
         let disks = DisksState::new();
-        let (selected_volume, selected_path) = {
+        let volume_and_path = {
             let item = disks.iter().next().unwrap();
 
-            (item.path.to_string(), item.default_path.to_string())
+            VolumePathAndFile::new_with_path(item.path.to_string(), item.default_path.as_str())
         };
+
+        let size_calculator = Rc::new(size_calculator);
+
         MainState {
             disks,
-            left_panel: PanelState::new(selected_volume.clone(), selected_path.to_string()),
-            right_panel: PanelState::new(selected_volume, selected_path),
+            left_panel: PanelState::new(size_calculator.clone(), volume_and_path.clone(), true),
+            right_panel: PanelState::new(size_calculator, volume_and_path, false),
             left_panel_active: true,
-            persistence_state: DataState::None,
+            persistence_state,
         }
     }
 
@@ -49,9 +60,9 @@ impl MainState {
 
     pub fn get_active_path(&self) -> &str {
         if self.left_panel_active {
-            self.left_panel.selected_path.as_str()
+            self.left_panel.volume_and_path.get_path()
         } else {
-            self.right_panel.selected_path.as_str()
+            self.right_panel.volume_and_path.get_path()
         }
     }
 }
