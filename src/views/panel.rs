@@ -365,7 +365,6 @@ pub fn Panel(left_panel: bool) -> Element {
                         }
                     }
                 }
-                println!("Key pressed: {:?}", ctx);
             },
             table { class: "files-table",
 

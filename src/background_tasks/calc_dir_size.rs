@@ -35,7 +35,6 @@ pub async fn calc_dir_size(
     handler: Arc<DirSizeCalculationHandler>,
     main_state: &mut Signal<MainState>,
 ) {
-    println!("Starting calculation for dir: {}", handler.dir.as_str());
     let mut dir_size = 0;
     let mut dirs_to_discover = vec![handler.dir.to_string()];
 
@@ -60,7 +59,7 @@ pub async fn calc_dir_size(
         while !handler.is_canceled() {
             no += 1;
 
-            if no > 50000 {
+            if no > 10000 {
                 main_state
                     .write()
                     .get_panel_state_mut(handler.left_panel)

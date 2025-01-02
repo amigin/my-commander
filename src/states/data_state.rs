@@ -37,3 +37,9 @@ impl<T> DataState<T> {
         self
     }
 }
+
+impl<T> From<T> for DataState<T> {
+    fn from(value: T) -> Self {
+        Self::Loaded(value)
+    }
+}

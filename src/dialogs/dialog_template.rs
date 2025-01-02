@@ -9,6 +9,11 @@ pub fn DialogTemplate(window_size_style: String, title: String, content: Element
             tr { style: "height: 100%; width:100%;",
                 td {
                     div {
+                        onkeypress: |ctx| {
+                            if ctx.key() == Key::Escape {
+                                consume_context::<Signal<MainState>>().write().dialog = None;
+                            }
+                        },
                         id: "dialog-window",
                         style: "margin: auto; {window_size_style}",
                         table { class: "window-header", style: "width:100%",

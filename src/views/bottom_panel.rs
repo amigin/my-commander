@@ -19,13 +19,9 @@ pub fn BottomPanel() -> Element {
                         input {
                             class: "from-control-sm",
                             style: "border: 1px solid #ccc; width: 100%; border-radius: 3px",
-                            onkeyup: move |event| {
-                                println!("Key pressed: {:?}", event);
-                            },
-                        
+                            onkeyup: move |event| {},
                         }
                     }
-                
                 }
             }
 
@@ -49,7 +45,6 @@ pub fn BottomPanel() -> Element {
                     td {
                         button { class: "btn btn-secondary btn-light bottom-button", "F8 - Delete" }
                     }
-                
                 }
             }
         }
