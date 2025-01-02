@@ -47,7 +47,7 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     Ok(text) => {
                         rsx! {
                             div { class: "view-file-pad",
-                                textarea { style: "width:100%; height:100%; border: none;resize: none; border-radius: 5px;",
+                                textarea { style: "width:100%; height:100%; border: none;resize: none; border-radius: 5px;font-family: monospace;",
                                     {text}
                                 }
                             }
@@ -132,7 +132,9 @@ impl ViewContentType {
     pub fn detect_from_ext(ext: &str) -> Self {
         match ext {
             "jpg" | "jpeg" | "png" | "gif" | "bmp" | "webp" | "svg" | "mp4" | "pdf" => Self::Image,
-            "txt" | "md" | "rs" | "toml" | "json" | "xml" | "html" | "htm" | "lock" => Self::Text,
+            "txt" | "md" | "rs" | "toml" | "json" | "xml" | "html" | "htm" | "lock" | "yaml" => {
+                Self::Text
+            }
             _ => Self::Hex,
         }
     }

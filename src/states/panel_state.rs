@@ -289,6 +289,15 @@ impl PanelState {
             .get(self.selected_file_index)
             .unwrap()
     }
+
+    pub fn select_last_file(&mut self) {
+        let last_index = if let DataState::Loaded(files) = &self.files {
+            files.files.len()
+        } else {
+            0
+        };
+        self.selected_file_index = last_index - 1;
+    }
 }
 
 pub enum PressSpaceActionResult {

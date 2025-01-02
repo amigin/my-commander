@@ -306,6 +306,12 @@ pub fn Panel(left_panel: bool) -> Element {
                             }
                         }
                     }
+                    Key::ArrowLeft => {
+                        main_state.write().get_panel_state_mut(left_panel).selected_file_index = 0;
+                    }
+                    Key::ArrowRight => {
+                        main_state.write().get_panel_state_mut(left_panel).select_last_file();
+                    }
                     Key::ArrowDown => {
                         if selected_file_index < total_items - 1 {
                             main_state
