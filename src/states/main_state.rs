@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{volume_path_and_file::VolumePathAndFile, BackgroundTask};
+use crate::{dialogs::DialogState, volume_path_and_file::VolumePathAndFile, BackgroundTask};
 
 use super::*;
 use dioxus::prelude::*;
@@ -12,6 +12,7 @@ pub struct MainState {
     pub left_panel_active: bool,
     pub persistence_state: PersistenceState,
     background_tasks: Rc<Coroutine<BackgroundTask>>,
+    pub dialog: Option<DialogState>,
 }
 
 impl MainState {
@@ -65,6 +66,7 @@ impl MainState {
             left_panel_active: true,
             persistence_state,
             background_tasks,
+            dialog: None,
         }
     }
 

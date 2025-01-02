@@ -19,6 +19,13 @@ impl<T> DataState<T> {
         *self = DataState::Loaded(value);
     }
 
+    pub fn unwrap_loaded(&self) -> &T {
+        match self {
+            DataState::Loaded(value) => value,
+            _ => panic!("DataState is not loaded"),
+        }
+    }
+
     pub fn unwrap_loaded_mut(&mut self) -> &mut T {
         match self {
             DataState::Loaded(value) => value,

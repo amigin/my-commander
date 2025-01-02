@@ -281,6 +281,14 @@ impl PanelState {
             }
         });
     }
+
+    pub fn get_selected_file(&self) -> &PanelFileItem {
+        self.files
+            .unwrap_loaded()
+            .files
+            .get(self.selected_file_index)
+            .unwrap()
+    }
 }
 
 pub enum PressSpaceActionResult {

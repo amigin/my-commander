@@ -16,6 +16,13 @@ impl FileLineType {
             _ => false,
         }
     }
+
+    pub fn is_file(&self) -> bool {
+        match self {
+            FileLineType::File => true,
+            _ => false,
+        }
+    }
 }
 
 pub enum FileItemSize {

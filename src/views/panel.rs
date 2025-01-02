@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
 
-use crate::{consts::*, states::*, views::*};
+use crate::{consts::*, dialogs::*, states::*, views::*};
 
 #[component]
 pub fn Panel(left_panel: bool) -> Element {
@@ -320,6 +320,31 @@ pub fn Panel(left_panel: bool) -> Element {
                                 .write()
                                 .get_panel_state_mut(left_panel)
                                 .set_selected_file(selected_file_index - 1);
+                        }
+                    }
+                    Key::F3 => {
+                        let file_path = {
+                            let write_access = main_state.read();
+                            let panel_state = write_access.get_panel_state(left_panel);
+                            let item = panel_state.get_selected_file();
+                            if item.tp.is_file() {
+                                Some(
+                                    panel_state
+                                        .volume_and_path
+                                        .new_with_segment(item.name.as_str())
+                                        .into_string(),
+                                )
+                            } else {
+                                None
+                            }
+                        };
+                        if let Some(file_path) = file_path {
+                            main_state.write().dialog = Some(DialogState::ViewFile(file_path));
+                        }
+                    }
+                    Key::Escape => {
+                        if main_state.read().dialog.is_some() {
+                            main_state.write().dialog = None;
                         }
                     }
                     _ => {

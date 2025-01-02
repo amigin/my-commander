@@ -132,6 +132,18 @@ pub fn render_icon(file_name: &str) -> Element {
                 img { class: "file-ico", src: asset!("/assets/ico/xsl.svg") }
             };
         }
+
+        if ext.eq_ignore_ascii_case("toml") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/toml.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("rs") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/rs.svg") }
+            };
+        }
     }
 
     rsx! {

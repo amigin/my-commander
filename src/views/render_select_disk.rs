@@ -18,6 +18,7 @@ pub fn render_select_disk(
 
     rsx! {
         select {
+            tabindex: -1,
             class: "form-select select-disk",
             oninput: move |ctx| {
                 consume_context::<Signal<MainState>>()

@@ -11,9 +11,9 @@
     /* IE 10 and IE 11 */
     user-select: none;
     /* Standard syntax */
-
-
     --line-separator-color: lightgray;
+    --dialog-background-color: #eeedf4;
+    --window-border-color: #b4b4b4
 }
 
 input:focus {
@@ -154,6 +154,7 @@ table:focus {
     background-repeat: no-repeat;
 }
 
+/* Loader */
 
 .loader {
     width: 16px;
@@ -188,4 +189,59 @@ table:focus {
     100% {
         transform: rotate(360deg);
     }
+}
+
+
+/* Dialog */
+
+#dialog-pad {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ffffff5e;
+    backdrop-filter: blur(1px);
+}
+
+#dialog-window {
+    border: 1px solid var(--window-border-color);
+    background: var(--dialog-background-color);
+    border-radius: 5px;
+}
+
+.window-header {
+    border-bottom: 1px solid var(--window-border-color);
+    padding: 4px;
+    text-align: center;
+    font-weight: 600;
+    background-color: color(srgb 0.9498 0.9449 0.9752);
+    border-radius: 5px 5px 0 0;
+}
+
+.view-file-pad {
+    background: white;
+    width: 98%;
+    margin: auto;
+    height: 87%;
+    border-radius: 5px;
+    box-shadow: 0 0 5px lightgray;
+}
+
+
+.close-button {
+    width: 10px;
+    height: 10px;
+    background-color: rgb(199, 2, 2);
+    border-radius: 5px;
+    margin: auto;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    background-color: rgb(255, 0, 0);
+}
+
+.btn-icon {
+    height: 16px;
 }
