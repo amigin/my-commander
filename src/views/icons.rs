@@ -144,6 +144,42 @@ pub fn render_icon(file_name: &str) -> Element {
                 img { class: "file-ico", src: asset!("/assets/ico/rs.svg") }
             };
         }
+
+        if ext.eq_ignore_ascii_case("cs") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/csharp.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("dll") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/dll.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("json") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/json.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("yaml") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/yaml.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("yml") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/yaml.svg") }
+            };
+        }
+
+        if ext.eq_ignore_ascii_case("py") {
+            return rsx! {
+                img { class: "file-ico", src: asset!("/assets/ico/py.svg") }
+            };
+        }
     }
 
     rsx! {

@@ -1,3 +1,7 @@
+body {
+    overflow: hidden;
+}
+
 #main {
     height: 100vh;
     --app-height: 100vh;
@@ -13,7 +17,7 @@
     /* Standard syntax */
     --line-separator-color: lightgray;
     --dialog-background-color: #eeedf4;
-    --window-border-color: #b4b4b4
+    --window-border-color: #b4b4b4;
 }
 
 input:focus {

@@ -2,7 +2,7 @@ use std::io::Read;
 
 use dioxus::prelude::*;
 
-use crate::{dialogs::*, DataState};
+use crate::{dialogs::*, DataState, MainState};
 
 #[component]
 pub fn DialogViewFile(file_name: String) -> Element {
@@ -103,6 +103,11 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     onclick: move |_| {
                         state.write().content_type = ViewContentType::Image.into();
                     },
+                    onkeypress: |ctx| {
+                        if ctx.key() == Key::Escape {
+                            consume_context::<Signal<MainState>>().write().dialog = None;
+                        }
+                    },
                     {"Image"}
                 }
                 button {
@@ -110,12 +115,22 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     onclick: move |_| {
                         state.write().content_type = ViewContentType::Text.into();
                     },
+                    onkeypress: |ctx| {
+                        if ctx.key() == Key::Escape {
+                            consume_context::<Signal<MainState>>().write().dialog = None;
+                        }
+                    },
                     {"Text"}
                 }
                 button {
                     class: "btn {hex_style} btn-sm",
                     onclick: move |_| {
                         state.write().content_type = ViewContentType::Hex.into();
+                    },
+                    onkeypress: |ctx| {
+                        if ctx.key() == Key::Escape {
+                            consume_context::<Signal<MainState>>().write().dialog = None;
+                        }
                     },
                     {"Hex"}
                 }
