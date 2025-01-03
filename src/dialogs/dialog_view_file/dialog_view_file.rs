@@ -1,7 +1,7 @@
-use std::io::Read;
-
 use dioxus::prelude::*;
+use tokio::io::AsyncReadExt;
 
+use super::*;
 use crate::{dialogs::*, DataState, MainState};
 
 #[component]
@@ -9,13 +9,22 @@ pub fn DialogViewFile(file_name: String) -> Element {
     let mut state = use_signal(|| ViewFileState::new());
     let state_read_access = state.read();
 
+    let file_size = state_read_access.file_size;
+
     let content_type = match state_read_access.content_type.as_ref() {
         DataState::None => {
             let file_name_spawned = file_name.clone();
             spawn(async move {
                 state.write().content_type.set_loading();
-                let content_type = detect_file_content(file_name_spawned.as_str());
-                state.write().content_type = content_type.into();
+                match detect_file_content(file_name_spawned.as_str()).await {
+                    Ok((content_type, file_size)) => {
+                        state.write().content_type = content_type.into();
+                        state.write().file_size = file_size;
+                    }
+                    Err(err) => {
+                        state.write().content_type = DataState::Error(err);
+                    }
+                }
             });
             return render_view(&file_name, rsx! { "Detecting content type..." });
         }
@@ -93,7 +102,9 @@ pub fn DialogViewFile(file_name: String) -> Element {
         }
         ViewContentType::Hex => {
             hex_style = "btn-primary";
-            rsx! { "Showing hex content" }
+            rsx! {
+                ViewHex { file_name: file_name.as_str(), file_size }
+            }
         }
     };
 
@@ -172,6 +183,7 @@ async fn load_file(file_name: String) -> Result<Vec<u8>, String> {
 pub struct ViewFileState {
     pub content_type: DataState<ViewContentType>,
     pub data: DataState<Vec<u8>>,
+    pub file_size: u64,
 }
 
 impl ViewFileState {
@@ -179,6 +191,7 @@ impl ViewFileState {
         Self {
             content_type: DataState::None,
             data: DataState::None,
+            file_size: 0,
         }
     }
 }
@@ -207,12 +220,13 @@ impl ViewContentType {
     }
 }
 
-fn detect_file_content(file_name: &str) -> ViewContentType {
+async fn detect_file_content(file_name: &str) -> Result<(ViewContentType, u64), String> {
+    let file_size = get_file_size(file_name).await?;
     let file_ext = file_name.split('.').last().unwrap_or("");
     let result = ViewContentType::detect_from_ext(file_ext.to_lowercase().as_str());
 
     if !result.is_hex() {
-        return result;
+        return Ok((result, file_size));
     }
 
     let mut to_download = Vec::with_capacity(1024);
@@ -221,33 +235,31 @@ fn detect_file_content(file_name: &str) -> ViewContentType {
         to_download.set_len(1024);
     }
 
-    let file = std::fs::File::open(file_name);
+    let mut file = tokio::fs::File::open(file_name)
+        .await
+        .map_err(|err| format!("Error opening file: {err}"))?;
 
-    if file.is_err() {
-        return ViewContentType::Hex;
+    let read_size = file
+        .read(&mut to_download)
+        .await
+        .map_err(|err| format!("Error reading file: {err}"))?;
+
+    if read_size == 0 {
+        return Ok((ViewContentType::Text, file_size));
     }
 
-    let mut file = file.unwrap();
-
-    let size = file.read(&mut to_download);
-
-    if size.is_err() {
-        return ViewContentType::Hex;
-    }
-
-    let size = size.unwrap();
-
-    println!("Size: {size}");
-
-    if size == 0 {
-        return ViewContentType::Text;
-    }
-
-    let text = std::str::from_utf8(&to_download[0..size]);
+    let text = std::str::from_utf8(&to_download[0..read_size]);
 
     if text.is_ok() {
-        return ViewContentType::Text;
+        return Ok((ViewContentType::Text, file_size));
     }
 
-    ViewContentType::Hex
+    Ok((ViewContentType::Hex, file_size))
+}
+
+async fn get_file_size(file_name: &str) -> Result<u64, String> {
+    let meta_data = tokio::fs::metadata(file_name)
+        .await
+        .map_err(|err| format!("Error reading file: {err}"))?;
+    Ok(meta_data.len())
 }

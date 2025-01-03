@@ -270,3 +270,32 @@ table:focus {
             #fff 10px,
             #fff 20px);
 }
+
+.hex_symb {
+    width: 14px;
+    color: gray;
+    cursor: pointer;
+}
+
+.hex_symb:hover {
+    color: black;
+    font-weight: 200;
+}
+
+.asci-symb {
+    background-color: gray;
+    color: white;
+    padding: 2px;
+    border-radius: 3px;
+    padding-bottom: 1px;
+    font-size: 8px;
+}
+
+.hex-symb-selected {
+    color: red !important;
+}
+
+.hex-view-line:hover {
+    background-color: #f0f0f0;
+
+}
