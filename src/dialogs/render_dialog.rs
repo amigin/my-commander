@@ -24,5 +24,11 @@ pub fn RenderDialog() -> Element {
                 DialogViewFile { file_name }
             }
         }
+
+        super::DialogState::DeleteConfirmation { amount, on_ok } => {
+            return rsx! {
+                DeleteConfirmationDialog { amount, on_ok }
+            }
+        }
     }
 }

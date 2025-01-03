@@ -17,6 +17,7 @@ pub fn BottomPanel() -> Element {
                     td { style: "text-wrap: nowrap;", {active_path} }
                     td { style: "width:100%",
                         input {
+                            tabindex: -1,
                             class: "from-control-sm",
                             style: "border: 1px solid #ccc; width: 100%; border-radius: 3px",
                             onkeyup: move |event| {},
@@ -28,22 +29,46 @@ pub fn BottomPanel() -> Element {
             table { style: "width:100%",
                 tr {
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F3 - View" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F3 - View"
+                        }
                     }
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F4 - Edit" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F4 - Edit"
+                        }
                     }
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F5 - Copy" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F5 - Copy"
+                        }
                     }
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F6 - Move" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F6 - Move"
+                        }
                     }
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F7 - New Folder" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F7 - New Folder"
+                        }
                     }
                     td {
-                        button { class: "btn btn-secondary btn-light bottom-button", "F8 - Delete" }
+                        button {
+                            tabindex: -1,
+                            class: "btn btn-secondary btn-light bottom-button",
+                            "F8 - Delete"
+                        }
                     }
                 }
             }

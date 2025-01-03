@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use dioxus::prelude::*;
 
 
-use crate::{consts::*, dialogs::*, states::*, views::*};
+
+use crate::{consts::*, states::*, views::*};
 
 #[component]
 pub fn Panel(left_panel: bool) -> Element {
@@ -13,16 +14,21 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let panel_state = main_state_read_access.get_panel_state(left_panel);
 
+    let tab_index = if main_state_read_access.dialog.is_some(){
+        -1
+    }else{
+        0
+    };
+
     let mut total_folders = 0;
     let mut total_files = 0;
     let mut total_size = 0;
 
-    let selected_file_index  = panel_state.selected_file_index;
-    let mut total_items = 0;
 
-    let mut selected_file_type:Option<FileLineType> = None;
+    let mut render_data = RenderData::new(left_panel, panel_state.selected_file_index);
+    render_data.dialog_shows = main_state_read_access.dialog.is_some();
 
-    let mut selected_amount = 0;
+
     let mut selected_size = 0;
 
     let files = match &panel_state.files {
@@ -57,7 +63,7 @@ pub fn Panel(left_panel: bool) -> Element {
             total_files = value.files_amount;
             total_size = value.total_size;
             total_folders = value.folders_amount;
-            total_items = value.files.len();
+            render_data.total_items = value.files.len();
          
 
             let files = value.files.iter().enumerate().filter(|itm| {
@@ -74,7 +80,7 @@ pub fn Panel(left_panel: bool) -> Element {
             }). map(|(no, file_info)| {
 
                 if file_info.marked{
-                    selected_amount += 1;
+                    render_data.selected_amount += 1;
                     selected_size += file_info.size.get_size();
                 }
 
@@ -94,7 +100,7 @@ pub fn Panel(left_panel: bool) -> Element {
                 };
 
                 if item_selected  {
-                    selected_file_type = Some(file_info.tp);
+                    render_data.selected_file_type = Some(file_info.tp);
                 }
 
                 let (icon, created, modified) = match file_info.tp{
@@ -249,10 +255,10 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let search_ico =asset!("/assets/ico/search.svg");
 
-    let selected_content = if selected_amount > 0 {
+    let selected_content = if render_data.selected_amount > 0 {
         let size = crate::utils::format_bytes(selected_size);
       rsx!{
-        span { style: "color:red", "Selected: {selected_amount} items, {size} bytes" }
+        span { style: "color:red", "Selected: {render_data.selected_amount} items, {size} bytes" }
     }  
     }else{
         rsx!{}
@@ -266,6 +272,7 @@ pub fn Panel(left_panel: bool) -> Element {
                     td { style: "text-align:right;",
                         div { style: "display:inline-block",
                             input {
+                                tabindex: -1,
                                 class: "search-input",
                                 style: "background-image: url(\"{search_ico}\")",
                                 oninput: move |ctx| {
@@ -277,6 +284,7 @@ pub fn Panel(left_panel: bool) -> Element {
                             }
                         }
                         button {
+                            tabindex: -1,
                             class: "btn {show_hidden_style} btn-sm",
                             onclick: move |_| {
                                 main_state.write().click_show_hidden(left_panel);
@@ -295,7 +303,7 @@ pub fn Panel(left_panel: bool) -> Element {
             id: panel_id,
             class: "files-panel",
             style: "  overflow-anchor: none;",
-            tabindex: 1,
+            tabindex: tab_index,
 
             onkeypress: move |ctx| {
                 ctx.prevent_default();
@@ -307,82 +315,7 @@ pub fn Panel(left_panel: bool) -> Element {
 
 
             onkeyup: move |ctx| {
-                match ctx.key() {
-                    Key::Tab => {
-                        main_state.write().tab_pressed();
-                    }
-                    Key::Enter => {
-                        if let Some(selected_file_type) = selected_file_type {
-                            match selected_file_type {
-                                FileLineType::Dir => {
-                                    main_state.write().press_enter(left_panel);
-                                }
-                                FileLineType::Back => {
-                                    main_state.write().press_enter(left_panel);
-                                }
-                                FileLineType::File => {}
-                            }
-                        }
-                    }
-                    Key::ArrowLeft => {
-                        main_state.write().get_panel_state_mut(left_panel).selected_file_index = 0;
-                    }
-                    Key::ArrowRight => {
-                        main_state.write().get_panel_state_mut(left_panel).select_last_file();
-                    }
-                    Key::ArrowDown => {
-                        if selected_file_index < total_items - 1 {
-                            main_state
-                                .write()
-                                .get_panel_state_mut(left_panel)
-                                .set_selected_file(selected_file_index + 1);
-                        }
-                    }
-                    Key::ArrowUp => {
-                        if selected_file_index > 0 {
-                            main_state
-                                .write()
-                                .get_panel_state_mut(left_panel)
-                                .set_selected_file(selected_file_index - 1);
-                        }
-                    }
-                    Key::F3 => {
-                        let file_path = {
-                            let write_access = main_state.read();
-                            let panel_state = write_access.get_panel_state(left_panel);
-                            let item = panel_state.get_selected_file();
-                            if item.tp.is_file() {
-                                Some(
-                                    panel_state
-                                        .volume_and_path
-                                        .new_with_segment(item.name.as_str())
-                                        .into_string(),
-                                )
-                            } else {
-                                None
-                            }
-                        };
-                        if let Some(file_path) = file_path {
-                            main_state.write().dialog = Some(DialogState::ViewFile(file_path));
-                        }
-                    }
-                    Key::Escape => {
-                        if main_state.read().dialog.is_some() {
-                            main_state.write().dialog = None;
-                        }
-                    }
-                    _ => {
-                        match ctx.code() {
-                            Code::Space => {
-                                main_state
-                                    .write()
-                                    .get_panel_state_mut(left_panel)
-                                    .space_pressed(selected_file_index);
-                            }
-                            _ => {}
-                        }
-                    }
-                }
+                super::handle_key_press(ctx, main_state, render_data);
             },
             table { class: "files-table",
 

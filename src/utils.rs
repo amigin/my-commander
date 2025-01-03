@@ -53,3 +53,16 @@ pub fn set_panel_focus(left_panel_active: bool) {
 
     document::eval(command.as_str());
 }
+
+pub fn set_focus(id: &str) {
+    let command = format!(
+        r#"
+            setTimeout(()=>{{
+            document.getElementById('{id}').focus();
+          }}, 50)
+        "#,
+        id = id
+    );
+
+    document::eval(command.as_str());
+}

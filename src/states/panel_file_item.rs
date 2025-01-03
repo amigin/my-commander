@@ -10,6 +10,12 @@ pub enum FileLineType {
 }
 
 impl FileLineType {
+    pub fn is_back(&self) -> bool {
+        match self {
+            FileLineType::Back => true,
+            _ => false,
+        }
+    }
     pub fn is_dir(&self) -> bool {
         match self {
             FileLineType::Dir => true,
@@ -25,6 +31,7 @@ impl FileLineType {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum FileItemSize {
     Unknown,
     Calculating(u64),
@@ -72,6 +79,7 @@ impl FileItemSize {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PanelFileItem {
     pub name: String,
     pub size: FileItemSize,

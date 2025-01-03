@@ -204,8 +204,8 @@ table:focus {
     top: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #ffffff5e;
-    backdrop-filter: blur(1px);
+    background-color: #ffffff9c;
+    backdrop-filter: blur(5px);
 }
 
 #dialog-window {
@@ -236,7 +236,7 @@ table:focus {
 .close-button {
     width: 10px;
     height: 10px;
-    background-color: rgb(199, 2, 2);
+    background-color: color(srgb 0.9978 0.3733 0.3409);
     border-radius: 5px;
     margin: auto;
     cursor: pointer;
@@ -298,4 +298,101 @@ table:focus {
 .hex-view-line:hover {
     background-color: #f0f0f0;
 
+}
+
+.confirmation-dialog {
+    padding: 30px 10px 10px 10px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.dialog-buttons {
+    margin: 10px;
+    text-align: right;
+}
+
+
+.mac-button {
+    display: inline-block;
+    padding: 4px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    /* Slightly rounded corners */
+    background-image: linear-gradient(to bottom, #428bca, #2d6ca2);
+    /* Core blue gradient */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1),
+        /* Subtle outer shadow */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    /* Subtle inner highlight */
+    cursor: pointer;
+    transition: background-image 0.2s ease, box-shadow 0.2s ease;
+    /* Smooth transitions */
+}
+
+.mac-button:hover {
+    background-image: linear-gradient(to bottom, #56a0dc, #3b7bb5);
+    /* Darker on hover */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.mac-button:active {
+    background-image: linear-gradient(to bottom, #2d6ca2, #1f507a);
+    /* Even darker on active */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* More prominent inner shadow on active */
+    transform: translateY(1px);
+    /* Small down movement on click */
+}
+
+/* Optional: Add a focus style */
+.mac-button:focus {
+    outline: 2px solid #79b7ea;
+    /* A light blue outline */
+    outline-offset: 1px;
+}
+
+.mac-gray-button {
+    display: inline-block;
+    padding: 4px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    /* Darker text for contrast */
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    background-image: linear-gradient(to bottom, #e6e6e6, #d0d0d0);
+    /* Core gray gradient */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    /* Adjusted highlight */
+    cursor: pointer;
+    transition: background-image 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mac-gray-button:hover {
+    background-image: linear-gradient(to bottom, #f0f0f0, #dadada);
+    /* Lighter on hover */
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.mac-gray-button:active {
+    background-image: linear-gradient(to bottom, #d0d0d0, #b8b8b8);
+    /* Darker on active */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(1px);
+}
+
+.mac-gray-button:focus {
+    outline: 2px solid #a0a0a0;
+    /* A gray outline */
+    outline-offset: 1px;
 }
