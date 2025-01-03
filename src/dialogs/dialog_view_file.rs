@@ -37,7 +37,9 @@ pub fn DialogViewFile(file_name: String) -> Element {
             image_style = "btn-primary";
 
             rsx! {
-                div { class: "view-file-pad", style: "overflow-y: auto;",
+                div {
+                    class: "view-file-pad square-pattern",
+                    style: "overflow-y: auto;",
                     img { src: file_name.as_str() }
                 }
             }

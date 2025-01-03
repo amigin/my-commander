@@ -249,3 +249,24 @@ table:focus {
 .btn-icon {
     height: 16px;
 }
+
+
+.square-pattern {
+    text-align: center;
+    /* Must be equal to width for a square */
+    background-image: repeating-linear-gradient(0deg,
+            #eee,
+            /* Light color */
+            #eee 10px,
+            /* Light color for 10px */
+            #fff 10px,
+            /* Dark color starts at 10px */
+            #fff 20px
+            /* Dark color ends at 20px (10px width) */
+        ),
+        repeating-linear-gradient(90deg,
+            #eee,
+            #eee 10px,
+            #fff 10px,
+            #fff 20px);
+}

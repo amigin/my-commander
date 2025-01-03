@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
 
+
 use crate::{consts::*, dialogs::*, states::*, views::*};
 
 #[component]
@@ -20,6 +21,9 @@ pub fn Panel(left_panel: bool) -> Element {
     let mut total_items = 0;
 
     let mut selected_file_type:Option<FileLineType> = None;
+
+    let mut selected_amount = 0;
+    let mut selected_size = 0;
 
     let files = match &panel_state.files {
         DataState::None => {
@@ -68,6 +72,11 @@ pub fn Panel(left_panel: bool) -> Element {
 
 
             }). map(|(no, file_info)| {
+
+                if file_info.marked{
+                    selected_amount += 1;
+                    selected_size += file_info.size.get_size();
+                }
 
                 let item_selected = panel_state.is_file_selected(no);
                 let class_selected = if main_state_read_access.left_panel_active == left_panel{
@@ -240,6 +249,15 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let search_ico =asset!("/assets/ico/search.svg");
 
+    let selected_content = if selected_amount > 0 {
+        let size = crate::utils::format_bytes(selected_size);
+      rsx!{
+        span { style: "color:red", "Selected: {selected_amount} items, {size} bytes" }
+    }  
+    }else{
+        rsx!{}
+    };
+
     rsx! {
         div { class: "top-panel",
             table { style: "width:100%",
@@ -388,7 +406,8 @@ pub fn Panel(left_panel: bool) -> Element {
             b { {total_files.to_string()} }
             " files sized "
             b { {total_size.to_string()} }
-            " bytes"
+            " bytes  "
+            {selected_content}
         }
     }
 }
