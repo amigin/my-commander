@@ -118,7 +118,7 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     },
                     onkeypress: |ctx| {
                         if ctx.key() == Key::Escape {
-                            consume_context::<Signal<MainState>>().write().dialog = None;
+                            consume_context::<Signal<MainState>>().write().hide_dialog();
                         }
                     },
                     {"Image"}
@@ -130,7 +130,7 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     },
                     onkeypress: |ctx| {
                         if ctx.key() == Key::Escape {
-                            consume_context::<Signal<MainState>>().write().dialog = None;
+                            consume_context::<Signal<MainState>>().write().hide_dialog();
                         }
                     },
                     {"Text"}
@@ -142,7 +142,7 @@ pub fn DialogViewFile(file_name: String) -> Element {
                     },
                     onkeypress: |ctx| {
                         if ctx.key() == Key::Escape {
-                            consume_context::<Signal<MainState>>().write().dialog = None;
+                            consume_context::<Signal<MainState>>().write().hide_dialog();
                         }
                     },
                     {"Hex"}

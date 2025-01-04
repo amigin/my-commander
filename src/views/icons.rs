@@ -190,3 +190,9 @@ pub fn render_icon(file_name: &str) -> Element {
         }
     }
 }
+
+pub fn render_folder_icon() -> Element {
+    rsx! {
+        img { class: "file-ico", src: asset!("/assets/ico/folder.svg") }
+    }
+}

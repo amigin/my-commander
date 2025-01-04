@@ -10,3 +10,5 @@ mod disks_state;
 pub use disks_state::*;
 mod persistence_state;
 pub use persistence_state::*;
+mod panel_files_statistics;
+pub use panel_files_statistics::*;

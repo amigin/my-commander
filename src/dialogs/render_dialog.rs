@@ -9,7 +9,7 @@ pub fn RenderDialog() -> Element {
 
     let dialog_state = {
         let main_state_read_access = main_state.read();
-        main_state_read_access.dialog.clone()
+        main_state_read_access.get_dialog().clone()
     };
 
     if dialog_state.is_none() {
@@ -25,9 +25,19 @@ pub fn RenderDialog() -> Element {
             }
         }
 
-        super::DialogState::DeleteConfirmation { amount, on_ok } => {
+        super::DialogState::DeleteConfirmation {
+            amount,
+            volume_and_path,
+            selected_item,
+            on_ok,
+        } => {
             return rsx! {
-                DeleteConfirmationDialog { amount, on_ok }
+                DeleteDialog {
+                    amount,
+                    volume_and_path,
+                    selected_item,
+                    on_ok,
+                }
             }
         }
     }

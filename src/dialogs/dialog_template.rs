@@ -11,7 +11,7 @@ pub fn DialogTemplate(window_size_style: String, title: String, content: Element
                     div {
                         onkeypress: |ctx| {
                             if ctx.key() == Key::Escape {
-                                consume_context::<Signal<MainState>>().write().dialog = None;
+                                consume_context::<Signal<MainState>>().write().hide_dialog();
                             }
                         },
                         id: "dialog-window",
@@ -22,7 +22,7 @@ pub fn DialogTemplate(window_size_style: String, title: String, content: Element
                                     div {
                                         class: "close-button",
                                         onclick: |_| {
-                                            consume_context::<Signal<MainState>>().write().dialog = None;
+                                            consume_context::<Signal<MainState>>().write().hide_dialog();
                                         },
                                     }
                                 }

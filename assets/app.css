@@ -300,7 +300,7 @@ table:focus {
 
 }
 
-.confirmation-dialog {
+.dialog-content {
     padding: 30px 10px 10px 10px;
     text-align: center;
     font-size: 14px;

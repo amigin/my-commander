@@ -3,8 +3,7 @@ use std::collections::BTreeMap;
 use dioxus::prelude::*;
 
 
-
-use crate::{consts::*, states::*, views::*};
+use crate::{ consts::*, states::*, views::*};
 
 #[component]
 pub fn Panel(left_panel: bool) -> Element {
@@ -12,24 +11,26 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let main_state_read_access = main_state.read();
 
-    let panel_state = main_state_read_access.get_panel_state(left_panel);
+    let panel_state = main_state_read_access.get_panel_state(left_panel.into());
 
-    let tab_index = if main_state_read_access.dialog.is_some(){
+    let tab_index = if main_state_read_access.dialog_is_opened(){
         -1
     }else{
         0
     };
 
-    let mut total_folders = 0;
-    let mut total_files = 0;
+    //let mut total_folders = 0;
+    //let mut total_files = 0;
     let mut total_size = 0;
 
-
-    let mut render_data = RenderData::new(left_panel, panel_state.selected_file_index);
-    render_data.dialog_shows = main_state_read_access.dialog.is_some();
-
-
     let mut selected_size = 0;
+
+    let mut selected_amount = 0;
+
+    let panel_statistics = panel_state.statistics.clone();
+
+   // let panel_dyn_data = main_state_read_access.get_panel_dynamic_data(left_panel);
+
 
     let files = match &panel_state.files {
         DataState::None => {
@@ -60,13 +61,9 @@ pub fn Panel(left_panel: bool) -> Element {
         }
         DataState::Loading => rsx! { "Loading files..." },
         DataState::Loaded(value) => {
-            total_files = value.files_amount;
-            total_size = value.total_size;
-            total_folders = value.folders_amount;
-            render_data.total_items = value.files.len();
          
 
-            let files = value.files.iter().enumerate().filter(|itm| {
+            let files = value.iter().enumerate().filter(|itm| {
 
                 if panel_state.search.len()>0{
                     if !itm.1.name.to_lowercase().contains(&panel_state.search){
@@ -79,10 +76,14 @@ pub fn Panel(left_panel: bool) -> Element {
 
             }). map(|(no, file_info)| {
 
+                let file_size = file_info.size.get_size();
+
                 if file_info.marked{
-                    render_data.selected_amount += 1;
-                    selected_size += file_info.size.get_size();
+                    selected_amount += 1;
+                    selected_size += file_size;
                 }
+
+                total_size += file_size;
 
                 let item_selected = panel_state.is_file_selected(no);
                 let class_selected = if main_state_read_access.left_panel_active == left_panel{
@@ -99,18 +100,10 @@ pub fn Panel(left_panel: bool) -> Element {
                     }
                 };
 
-                if item_selected  {
-                    render_data.selected_file_type = Some(file_info.tp);
-                }
 
                 let (icon, created, modified) = match file_info.tp{
                     FileLineType::Dir => {
-                        let icon = rsx! {
-                            img {
-                                class: "file-ico",
-                                src: asset!("/assets/ico/folder.svg"),
-                            }
-                        };
+                        let icon = render_folder_icon();
 
                         let created = file_info.created.to_rfc5322();
                         let modified = file_info.modified.to_rfc5322();
@@ -188,10 +181,10 @@ pub fn Panel(left_panel: bool) -> Element {
                         ondoubleclick: move |_| {
                             match item_file_type {
                                 FileLineType::Dir => {
-                                    main_state.write().press_enter(left_panel);
+                                    main_state.write().press_enter(left_panel.into());
                                 }
                                 FileLineType::Back => {
-                                    main_state.write().press_enter(left_panel);
+                                    main_state.write().press_enter(left_panel.into());
                                 }
                                 FileLineType::File => {}
                             }
@@ -255,14 +248,16 @@ pub fn Panel(left_panel: bool) -> Element {
 
     let search_ico =asset!("/assets/ico/search.svg");
 
-    let selected_content = if render_data.selected_amount > 0 {
+    let selected_content = if selected_amount > 0 {
         let size = crate::utils::format_bytes(selected_size);
       rsx!{
-        span { style: "color:red", "Selected: {render_data.selected_amount} items, {size} bytes" }
+        span { style: "color:red", "Selected: {selected_amount} items, {size} bytes" }
     }  
     }else{
         rsx!{}
     };
+
+
 
     rsx! {
         div { class: "top-panel",
@@ -315,7 +310,7 @@ pub fn Panel(left_panel: bool) -> Element {
 
 
             onkeyup: move |ctx| {
-                super::handle_key_press(ctx, main_state, render_data);
+                crate::actions::handle_key_press(main_state, ctx, panel_statistics);
             },
             table { class: "files-table",
 
@@ -334,9 +329,9 @@ pub fn Panel(left_panel: bool) -> Element {
         }
         div { class: "file-panel-footer",
             "Total "
-            b { {total_folders.to_string()} }
+            b { {panel_state.statistics.folders_amount.to_string()} }
             " folders and "
-            b { {total_files.to_string()} }
+            b { {panel_state.statistics.files_amount.to_string()} }
             " files sized "
             b { {total_size.to_string()} }
             " bytes  "
@@ -345,6 +340,8 @@ pub fn Panel(left_panel: bool) -> Element {
     }
 }
 
+
+
 async fn load_files(path:&str, root_path: bool, show_hidden: bool) -> Result<FilesState, String> {
 
     let mut read_dir = tokio::fs::read_dir(path)
@@ -352,8 +349,7 @@ async fn load_files(path:&str, root_path: bool, show_hidden: bool) -> Result<Fil
         .map_err(|err| err.to_string())?;
 
     let mut result = FilesState {
-        files: Vec::new(),
-        total_size: 0,
+        items: Vec::new(),
         files_amount: 0,
         folders_amount: 0,
     };
@@ -378,7 +374,6 @@ async fn load_files(path:&str, root_path: bool, show_hidden: bool) -> Result<Fil
             continue;
         }
 
-        result.total_size += file_info.size.get_size();
 
         match file_info.tp{
             FileLineType::Dir => {
@@ -399,12 +394,13 @@ async fn load_files(path:&str, root_path: bool, show_hidden: bool) -> Result<Fil
     }
 
     for dir in folders {
-        result.files.push(dir.1);
+        result.items.push(dir.1);
     }
 
     for dir in files {
-        result.files.push(dir.1);
+        result.items.push(dir.1);
     }
 
     Ok(result)
 }
+

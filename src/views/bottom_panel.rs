@@ -1,20 +1,25 @@
 use dioxus::prelude::*;
+use rust_extensions::StrOrString;
 
 use crate::MainState;
 #[component]
 pub fn BottomPanel() -> Element {
-    let main_state = use_context::<Signal<MainState>>();
-    let main_state_read_access = main_state.read();
+    let active_path: StrOrString = {
+        let main_state = consume_context::<Signal<MainState>>();
+        let main_state_read_access = main_state.read();
 
-    let mut active_path = main_state_read_access.get_active_path();
-    if active_path.is_empty() {
-        active_path = "/";
-    }
+        let active_path = main_state_read_access.get_active_path();
+        if active_path.is_empty() {
+            "/".into()
+        } else {
+            active_path.to_string().into()
+        }
+    };
     rsx! {
         div { class: "bottom-panel",
             table { style: "width:100%",
                 tr {
-                    td { style: "text-wrap: nowrap;", {active_path} }
+                    td { style: "text-wrap: nowrap;", {active_path.as_str()} }
                     td { style: "width:100%",
                         input {
                             tabindex: -1,
@@ -66,6 +71,10 @@ pub fn BottomPanel() -> Element {
                     td {
                         button {
                             tabindex: -1,
+                            onclick: move |_| {
+                                println!("F8 - Delete");
+                                crate::actions::delete(None);
+                            },
                             class: "btn btn-secondary btn-light bottom-button",
                             "F8 - Delete"
                         }
@@ -75,3 +84,7 @@ pub fn BottomPanel() -> Element {
         }
     }
 }
+
+/*
+
+*/

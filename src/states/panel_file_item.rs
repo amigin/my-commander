@@ -2,7 +2,7 @@ use std::{fs::Metadata, time::UNIX_EPOCH};
 
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FileLineType {
     Dir,
     File,
@@ -31,7 +31,7 @@ impl FileLineType {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FileItemSize {
     Unknown,
     Calculating(u64),
@@ -79,7 +79,7 @@ impl FileItemSize {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PanelFileItem {
     pub name: String,
     pub size: FileItemSize,

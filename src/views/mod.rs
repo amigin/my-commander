@@ -6,5 +6,3 @@ mod icons;
 pub use icons::*;
 mod render_select_disk;
 pub use render_select_disk::*;
-mod handle_key_press;
-pub use handle_key_press::*;

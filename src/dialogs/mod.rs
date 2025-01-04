@@ -6,5 +6,5 @@ mod dialog_view_file;
 pub use dialog_view_file::*;
 mod dialog_template;
 pub use dialog_template::*;
-mod delete_confirmation;
-pub use delete_confirmation::*;
+mod delete;
+pub use delete::*;

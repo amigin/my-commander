@@ -12,7 +12,7 @@ pub struct MainState {
     pub left_panel_active: bool,
     pub persistence_state: PersistenceState,
     background_tasks: Rc<Coroutine<BackgroundTask>>,
-    pub dialog: Option<DialogState>,
+    dialog: Option<DialogState>,
 }
 
 impl MainState {
@@ -75,11 +75,17 @@ impl MainState {
         crate::utils::set_panel_focus(self.left_panel_active);
     }
 
-    pub fn get_panel_state(&self, left_panel: bool) -> &PanelState {
-        if left_panel {
-            &self.left_panel
-        } else {
-            &self.right_panel
+    pub fn get_panel_state(&self, left_panel: Option<bool>) -> &PanelState {
+        match left_panel {
+            Some(left_panel) => {
+                if left_panel {
+                    &self.left_panel
+                } else {
+                    &self.right_panel
+                }
+            }
+
+            None => self.get_active_panel(),
         }
     }
 
@@ -100,23 +106,31 @@ impl MainState {
         }
     }
 
-    pub fn press_enter(&mut self, left_panel: bool) {
+    pub fn press_enter(&mut self, left_panel: Option<bool>) {
         let has_update = {
-            let active_panel = self.get_panel_state_mut(left_panel);
+            let active_panel = if let Some(left_panel) = left_panel {
+                self.get_panel_state_mut(left_panel)
+            } else {
+                self.get_active_panel_mut()
+            };
             active_panel.press_enter()
         };
 
         if has_update {
             let persistence_state = {
-                let panel_state = self.get_panel_state(left_panel);
+                let active_panel = if let Some(left_panel) = left_panel {
+                    self.get_panel_state_mut(left_panel)
+                } else {
+                    self.get_active_panel()
+                };
 
                 VolumeAndPathPersistenceState {
-                    volume: panel_state.volume_and_path.get_volume().to_string(),
-                    path: panel_state.volume_and_path.get_path().to_string(),
+                    volume: active_panel.volume_and_path.get_volume().to_string(),
+                    path: active_panel.volume_and_path.get_path().to_string(),
                 }
             };
 
-            if left_panel {
+            if self.left_panel_active {
                 self.persistence_state.left_panel.active = Some(persistence_state);
             } else {
                 self.persistence_state.right_panel.active = Some(persistence_state);
@@ -141,5 +155,42 @@ impl MainState {
 
         self.background_tasks
             .send(BackgroundTask::SaveState(self.persistence_state.clone()));
+    }
+
+    pub fn get_active_panel(&self) -> &PanelState {
+        if self.left_panel_active {
+            &self.left_panel
+        } else {
+            &self.right_panel
+        }
+    }
+
+    pub fn get_active_panel_mut(&mut self) -> &mut PanelState {
+        if self.left_panel_active {
+            &mut self.left_panel
+        } else {
+            &mut self.right_panel
+        }
+    }
+
+    pub fn set_focus_to_active_panel(&self) {
+        crate::utils::set_panel_focus(self.left_panel_active);
+    }
+
+    pub fn show_dialog(&mut self, dialog: DialogState) {
+        self.dialog = Some(dialog);
+    }
+
+    pub fn hide_dialog(&mut self) {
+        self.dialog = None;
+        self.set_focus_to_active_panel();
+    }
+
+    pub fn dialog_is_opened(&self) -> bool {
+        self.dialog.is_some()
+    }
+
+    pub fn get_dialog(&self) -> &Option<DialogState> {
+        &self.dialog
     }
 }

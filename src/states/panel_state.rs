@@ -7,7 +7,7 @@ use crate::{
     BackgroundTask,
 };
 
-use super::{DataState, PanelFileItem};
+use super::{DataState, PanelFileItem, PanelFilesStatistics};
 
 pub enum AutoSelectElement {
     None,
@@ -35,14 +35,13 @@ impl AutoSelectElement {
 }
 
 pub struct FilesState {
-    pub files: Vec<PanelFileItem>,
-    pub total_size: u64,
+    pub items: Vec<PanelFileItem>,
     pub files_amount: usize,
     pub folders_amount: usize,
 }
 
 pub struct PanelState {
-    pub files: DataState<FilesState>,
+    pub files: DataState<Vec<PanelFileItem>>,
     pub volume_and_path: VolumePathAndFile,
     pub selected_file_index: usize,
     pub auto_select_after_load: AutoSelectElement,
@@ -52,6 +51,7 @@ pub struct PanelState {
     calculations: HashMap<String, Arc<DirSizeCalculationHandler>>,
 
     pub background_tasks: Rc<Coroutine<BackgroundTask>>,
+    pub statistics: PanelFilesStatistics,
 }
 
 impl PanelState {
@@ -71,6 +71,7 @@ impl PanelState {
             left_panel,
             calculations: HashMap::new(),
             background_tasks,
+            statistics: PanelFilesStatistics::new(left_panel),
         }
     }
 
@@ -85,7 +86,7 @@ impl PanelState {
     fn mark_file_or_dir(&mut self, no: usize) -> PressSpaceActionResult {
         let files_state = self.files.unwrap_loaded_mut();
 
-        let file = files_state.files.get_mut(no);
+        let file = files_state.get_mut(no);
 
         if let Some(file) = file {
             match file.tp {
@@ -149,7 +150,7 @@ impl PanelState {
         match &self.auto_select_after_load {
             AutoSelectElement::None => {}
             AutoSelectElement::Dir(name_to_auto_select) => {
-                for (index, itm) in files.files.iter().enumerate() {
+                for (index, itm) in files.items.iter().enumerate() {
                     if itm.tp.is_dir() {
                         if itm.name.eq_ignore_ascii_case(name_to_auto_select) {
                             self.selected_file_index = index;
@@ -159,7 +160,7 @@ impl PanelState {
                 }
             }
             AutoSelectElement::File(name_to_auto_select) => {
-                for (index, itm) in files.files.iter().enumerate() {
+                for (index, itm) in files.items.iter().enumerate() {
                     if !itm.tp.is_dir() {
                         if itm.name.eq_ignore_ascii_case(name_to_auto_select) {
                             self.selected_file_index = index;
@@ -169,8 +170,10 @@ impl PanelState {
                 }
             }
         }
-
-        self.files.set_loaded(files);
+        self.statistics.files_amount = files.files_amount;
+        self.statistics.folders_amount = files.folders_amount;
+        self.statistics.total_items = files.items.len();
+        self.files.set_loaded(files.items);
     }
 
     fn cancel_dir_size_calculation(&mut self) {
@@ -180,7 +183,7 @@ impl PanelState {
     }
 
     pub fn go_to_folder(&mut self, no: usize) {
-        let item = self.files.unwrap_loaded_mut().files.remove(no);
+        let item = self.files.unwrap_loaded_mut().remove(no);
         self.volume_and_path.append_segment(&item.name);
 
         self.reset_files();
@@ -211,7 +214,7 @@ impl PanelState {
     pub fn click_show_hidden(&mut self) -> bool {
         match &self.files {
             DataState::Loaded(files) => {
-                let item = files.files.get(self.selected_file_index);
+                let item = files.get(self.selected_file_index);
                 self.auto_select_after_load = AutoSelectElement::set_auto_select(item);
             }
             _ => {
@@ -227,7 +230,6 @@ impl PanelState {
         let tp = self
             .files
             .unwrap_loaded_mut()
-            .files
             .get(self.selected_file_index)
             .unwrap()
             .tp;
@@ -256,7 +258,7 @@ impl PanelState {
         }
 
         if let DataState::Loaded(files) = &mut self.files {
-            for itm in files.files.iter_mut() {
+            for itm in files.iter_mut() {
                 if itm.tp.is_dir() {
                     if itm.name.eq_ignore_ascii_case(dir) {
                         found_dir(itm);
@@ -282,21 +284,29 @@ impl PanelState {
         });
     }
 
-    pub fn get_selected_file(&self) -> &PanelFileItem {
+    pub fn get_selected_item(&self) -> &PanelFileItem {
         self.files
             .unwrap_loaded()
-            .files
             .get(self.selected_file_index)
             .unwrap()
     }
 
+    pub fn try_get_selected_item(&self) -> Option<&PanelFileItem> {
+        self.files.unwrap_loaded().get(self.selected_file_index)
+    }
+
     pub fn select_last_file(&mut self) {
         let last_index = if let DataState::Loaded(files) = &self.files {
-            files.files.len()
+            files.len()
         } else {
             0
         };
         self.selected_file_index = last_index - 1;
+    }
+
+    pub fn refresh_files(&mut self) {
+        self.files.set_none();
+        self.statistics.reset();
     }
 }
 

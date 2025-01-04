@@ -3,13 +3,13 @@ use dioxus::{desktop::*, prelude::*};
 
 use background_tasks::*;
 use views::*;
-mod views;
-
+mod actions;
 mod background_tasks;
 mod consts;
 mod dialogs;
 mod states;
 mod utils;
+mod views;
 mod volume_path_and_file;
 use states::*;
 use wry::http::Response;
