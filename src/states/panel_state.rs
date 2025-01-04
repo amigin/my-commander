@@ -292,7 +292,10 @@ impl PanelState {
     }
 
     pub fn try_get_selected_item(&self) -> Option<&PanelFileItem> {
-        self.files.unwrap_loaded().get(self.selected_file_index)
+        match self.files {
+            DataState::Loaded(ref files) => files.get(self.selected_file_index),
+            _ => None,
+        }
     }
 
     pub fn select_last_file(&mut self) {

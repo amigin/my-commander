@@ -98,14 +98,6 @@ impl MainState {
         }
     }
 
-    pub fn get_active_path(&self) -> &str {
-        if self.left_panel_active {
-            self.left_panel.volume_and_path.get_path()
-        } else {
-            self.right_panel.volume_and_path.get_path()
-        }
-    }
-
     pub fn press_enter(&mut self, left_panel: Option<bool>) {
         let has_update = {
             let active_panel = if let Some(left_panel) = left_panel {

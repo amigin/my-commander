@@ -1,4 +1,4 @@
-use crate::{dialogs::*, states::*};
+use crate::states::*;
 use dioxus::prelude::*;
 
 pub fn handle_key_press(
@@ -65,27 +65,7 @@ pub fn handle_key_press(
             }
         }
         Key::F3 => {
-            let file_path = {
-                let mut main_state = consume_context::<Signal<MainState>>();
-                let write_access = main_state.write();
-                let panel_state = write_access.get_panel_state(panel_statistics.left_panel.into());
-                let item = panel_state.get_selected_item();
-                if item.tp.is_file() {
-                    Some(
-                        panel_state
-                            .volume_and_path
-                            .new_with_segment(item.name.as_str())
-                            .into_string(),
-                    )
-                } else {
-                    None
-                }
-            };
-            if let Some(file_path) = file_path {
-                consume_context::<Signal<MainState>>()
-                    .write()
-                    .show_dialog(DialogState::ViewFile(file_path));
-            }
+            super::view_file(panel_statistics.left_panel.into());
         }
         Key::F8 => {
             super::delete(panel_statistics.left_panel.into());
