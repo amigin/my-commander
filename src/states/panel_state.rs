@@ -138,8 +138,6 @@ impl PanelState {
     pub fn space_pressed(&mut self, no: usize) {
         let (result, recalculate_amount) = self.mark_file_or_dir(no);
 
-        println!("Recalc amount: {:?}", recalculate_amount);
-
         if let Some(recalculate_amount) = recalculate_amount {
             if recalculate_amount {
                 self.statistics.marked_amount += 1;
@@ -224,6 +222,7 @@ impl PanelState {
     fn reset_files(&mut self) {
         self.files.set_none();
         self.selected_file_index = 0;
+        self.statistics.reset();
     }
 
     pub fn set_selected_volume(&mut self, volume: String) {
