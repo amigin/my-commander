@@ -111,7 +111,3 @@ pub fn BottomPanel() -> Element {
         }
     }
 }
-
-/*
-
-*/

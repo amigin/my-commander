@@ -310,20 +310,26 @@ impl PanelState {
             .unwrap()
     }
 
-    pub fn get_selected_or_marked_single_item(&self) -> Option<&PanelFileItem> {
+    pub fn get_marked_items(&self) -> Vec<PanelFileItem> {
         if self.statistics.marked_amount > 0 {
+            let mut result = Vec::with_capacity(self.statistics.marked_amount);
             if let DataState::Loaded(files) = &self.files {
                 for file in files {
                     if file.marked {
-                        return Some(file);
+                        result.push(file.clone());
                     }
                 }
             }
+            return result;
         }
 
-        let result = self.files.unwrap_loaded().get(self.selected_file_index)?;
+        let result = self.files.unwrap_loaded().get(self.selected_file_index);
 
-        Some(result)
+        if result.is_none() {
+            return vec![];
+        }
+
+        vec![result.cloned().unwrap()]
     }
 
     pub fn try_get_selected_item(&self) -> Option<&PanelFileItem> {

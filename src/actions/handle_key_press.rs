@@ -6,7 +6,7 @@ pub fn handle_key_press(
     event: Event<KeyboardData>,
     panel_statistics: PanelFilesStatistics,
 ) {
-    let (selected_file_type, selected_file_index) = {
+    let (selected_file_type, selected_file_index, has_dialog_opened) = {
         let read_access = main_state.read();
         let panel_state = read_access.get_panel_state(panel_statistics.left_panel.into());
 
@@ -16,8 +16,16 @@ pub fn handle_key_press(
             return;
         }
 
-        (selected_item.unwrap().tp, panel_state.selected_file_index)
+        (
+            selected_item.unwrap().tp,
+            panel_state.selected_file_index,
+            read_access.dialog_is_opened(),
+        )
     };
+
+    if has_dialog_opened {
+        return;
+    }
 
     match event.key() {
         Key::Tab => {

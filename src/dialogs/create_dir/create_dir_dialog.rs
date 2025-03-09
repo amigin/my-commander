@@ -11,6 +11,7 @@ pub fn CreateDirDialog(current_path: Rc<String>) -> Element {
     let current_path = current_path.clone();
     let buttons = crate::components::dialog_buttons(
         "Create",
+        false,
         EventHandler::new(move |_| {
             let component_state_read_access = component_state.read();
             crate::actions::create_dir_dialog_ok_button(

@@ -1,11 +1,15 @@
+use std::rc::Rc;
+
 use super::super::*;
-use crate::{render_folder_icon, render_icon, volume_path_and_file::VolumePathAndFile};
+use crate::{
+    render_folder_icon, render_icon, states::PanelFileItem, volume_path_and_file::VolumePathAndFile,
+};
 use dioxus::prelude::*;
 
 #[component]
 pub fn DeleteDialog(
     volume_and_path: VolumePathAndFile,
-    selected_item: SelectedItem,
+    items: Rc<Vec<PanelFileItem>>,
     on_ok: EventHandler<()>,
 ) -> Element {
     let mut state = use_signal(|| StateMode::Confirmation);
@@ -17,15 +21,17 @@ pub fn DeleteDialog(
 
     let content = match state_value {
         StateMode::Confirmation => {
-            let phrase = match selected_item {
-                SelectedItem::Single(selected_item) => match selected_item.tp {
+            let phrase = if items.len() == 1 {
+                let selected_item = items.get(0).unwrap();
+
+                match selected_item.tp {
                     crate::FileLineType::Dir => {
                         let icon = render_folder_icon();
                         rsx! {
                             div {
                                 "Are you sure you want to delete "
                                 {icon}
-                                span { style: "font-weight:800", {selected_item.name} }
+                                span { style: "font-weight:800", {selected_item.name.as_str()} }
                                 " directory?"
                             }
                         }
@@ -36,7 +42,7 @@ pub fn DeleteDialog(
                             div {
                                 "Are you sure you want to delete "
                                 {icon}
-                                span { style: "font-weight:800", {selected_item.name} }
+                                span { style: "font-weight:800", {selected_item.name.as_str()} }
                                 " file?"
                             }
                         }
@@ -44,14 +50,13 @@ pub fn DeleteDialog(
                     crate::FileLineType::Back => {
                         panic!("Back should not be in the list");
                     }
-                },
-                SelectedItem::MultiSelect(amount) => {
-                    rsx! {
-                        div {
-                            "Are you sure you want to delete "
-                            span { style: "font-weight:800", {amount.to_string()} }
-                            " items?"
-                        }
+                }
+            } else {
+                rsx! {
+                    div {
+                        "Are you sure you want to delete "
+                        span { style: "font-weight:800", {items.len().to_string()} }
+                        " items?"
                     }
                 }
             };
@@ -66,7 +71,7 @@ pub fn DeleteDialog(
             }
         }
         StateMode::Deleting => rsx! {
-            DeletingContent {}
+            DeletingContent { current_path: volume_and_path.as_str().to_string(), items }
         },
     };
 
