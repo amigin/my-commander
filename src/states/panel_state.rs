@@ -83,7 +83,7 @@ impl PanelState {
         self.selected_file_index = no;
     }
 
-    fn mark_file_or_dir(&mut self, no: usize) -> PressSpaceActionResult {
+    fn mark_file_or_dir(&mut self, no: usize) -> (PressSpaceActionResult, Option<bool>) {
         let files_state = self.files.unwrap_loaded_mut();
 
         let file = files_state.get_mut(no);
@@ -102,33 +102,53 @@ impl PanelState {
                                 self.left_panel,
                             ));
 
-                            println!("Sending size calculator to thread");
                             self.background_tasks
                                 .send(size_calculator_handler.clone().into());
-                            return PressSpaceActionResult::StartCalculation(
-                                size_calculator_handler,
+                            return (
+                                PressSpaceActionResult::StartCalculation(size_calculator_handler),
+                                Some(file.marked),
                             );
                         }
+
+                        return (PressSpaceActionResult::DoNothing, Some(file.marked));
                     } else {
                         if !file.size.is_known() {
                             let dir = self.volume_and_path.new_with_segment(&file.name);
                             file.size = super::FileItemSize::Unknown;
-                            return PressSpaceActionResult::StopCalculation(dir);
+                            return (
+                                PressSpaceActionResult::StopCalculation(dir),
+                                Some(file.marked),
+                            );
                         }
+
+                        return (PressSpaceActionResult::DoNothing, Some(file.marked));
                     }
                 }
                 super::FileLineType::File => {
                     file.marked = !file.marked;
+                    return (PressSpaceActionResult::DoNothing, Some(file.marked));
                 }
                 super::FileLineType::Back => {}
             }
         }
 
-        PressSpaceActionResult::DoNothing
+        (PressSpaceActionResult::DoNothing, None)
     }
 
     pub fn space_pressed(&mut self, no: usize) {
-        match self.mark_file_or_dir(no) {
+        let (result, recalculate_amount) = self.mark_file_or_dir(no);
+
+        println!("Recalc amount: {:?}", recalculate_amount);
+
+        if let Some(recalculate_amount) = recalculate_amount {
+            if recalculate_amount {
+                self.statistics.marked_amount += 1;
+            } else {
+                self.statistics.marked_amount -= 1;
+            }
+        };
+
+        match result {
             PressSpaceActionResult::StartCalculation(handler) => {
                 let key = handler.dir.to_string();
                 println!("Inserting calculation with key: {}", key);
@@ -291,6 +311,22 @@ impl PanelState {
             .unwrap()
     }
 
+    pub fn get_selected_or_marked_single_item(&self) -> Option<&PanelFileItem> {
+        if self.statistics.marked_amount > 0 {
+            if let DataState::Loaded(files) = &self.files {
+                for file in files {
+                    if file.marked {
+                        return Some(file);
+                    }
+                }
+            }
+        }
+
+        let result = self.files.unwrap_loaded().get(self.selected_file_index)?;
+
+        Some(result)
+    }
+
     pub fn try_get_selected_item(&self) -> Option<&PanelFileItem> {
         match self.files {
             DataState::Loaded(ref files) => files.get(self.selected_file_index),
@@ -312,6 +348,22 @@ impl PanelState {
         self.files.set_none();
         self.statistics.reset();
     }
+
+    /*
+    pub fn get_marked_elements_amount(&self) -> usize {
+        let mut result = 0;
+
+        if let DataState::Loaded(files) = &self.files {
+            for file in files {
+                if file.marked {
+                    result += 1;
+                }
+            }
+        }
+
+        result
+    }
+     */
 }
 
 pub enum PressSpaceActionResult {

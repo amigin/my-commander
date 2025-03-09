@@ -26,18 +26,12 @@ pub fn RenderDialog() -> Element {
         }
 
         super::DialogState::DeleteConfirmation {
-            amount,
             volume_and_path,
             selected_item,
             on_ok,
         } => {
             return rsx! {
-                DeleteDialog {
-                    amount,
-                    volume_and_path,
-                    selected_item,
-                    on_ok,
-                }
+                DeleteDialog { volume_and_path, selected_item, on_ok }
             }
         }
 

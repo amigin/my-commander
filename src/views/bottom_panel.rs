@@ -24,7 +24,12 @@ pub fn BottomPanel() -> Element {
             None => (false, false),
         };
 
-        (active_path, file_or_dir_selected, false, file_selected)
+        (
+            active_path,
+            file_or_dir_selected,
+            active_panel.statistics.marked_amount > 0,
+            file_selected,
+        )
     };
     rsx! {
         div { class: "bottom-panel",

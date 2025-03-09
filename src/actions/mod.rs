@@ -1,7 +1,7 @@
 mod handle_key_press;
 pub use handle_key_press::*;
-mod delete;
-pub use delete::*;
+mod delete_dialog;
+pub use delete_dialog::*;
 mod view_file;
 pub use view_file::*;
 mod create_dir_dialog;

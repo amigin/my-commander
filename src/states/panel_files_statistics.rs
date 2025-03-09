@@ -4,7 +4,7 @@ pub struct PanelFilesStatistics {
     pub folders_amount: usize,
     pub files_amount: usize,
     pub total_items: usize,
-    pub selected_amount: usize,
+    pub marked_amount: usize,
 }
 
 impl PanelFilesStatistics {
@@ -14,7 +14,7 @@ impl PanelFilesStatistics {
             folders_amount: 0,
             files_amount: 0,
             total_items: 0,
-            selected_amount: 0,
+            marked_amount: 0,
         }
     }
 
@@ -22,6 +22,6 @@ impl PanelFilesStatistics {
         self.folders_amount = 0;
         self.files_amount = 0;
         self.total_items = 0;
-        self.selected_amount = 0;
+        self.marked_amount = 0;
     }
 }
