@@ -12,12 +12,12 @@ out_dir = "dist"
 
 # assets file folder
 asset_dir = "assets"
-
+icon = ["assets/ico/app-icon.png"]
 
 [bundle]
 identifier = "com.jetdev"
 publisher = "JetDev"
-icon = ["assets/ico/pfx.png"]
+icon = ["assets/ico/app-icon.png"]
 
 
 [web.app]

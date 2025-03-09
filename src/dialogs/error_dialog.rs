@@ -34,6 +34,9 @@ pub fn ErrorDialog(title: &'static str, message: String) -> Element {
             }
         }
     };
+
+    crate::utils::set_focus("btn-cancel");
+
     rsx! {
         DialogTemplate { title, window_size_style: "width:500px", content }
     }
