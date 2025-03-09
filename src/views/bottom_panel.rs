@@ -82,6 +82,10 @@ pub fn BottomPanel() -> Element {
                         button {
                             tabindex: -1,
                             class: "btn btn-secondary btn-light bottom-button",
+                            onclick: move |_| {
+                                println!("F7 - Create Dir");
+                                crate::actions::create_dir();
+                            },
                             "F7 - New Folder"
                         }
                     }

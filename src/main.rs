@@ -5,6 +5,7 @@ use background_tasks::*;
 use views::*;
 mod actions;
 mod background_tasks;
+mod components;
 mod consts;
 mod dialogs;
 mod states;
@@ -23,11 +24,17 @@ fn main() {
                     .with_title("My commander"),
             ),
         )
-        .launch(app)
+        .launch(|| {
+            rsx! {
+                document::Stylesheet { href: CSS_STYLED }
+                document::Stylesheet { href: CSS_APP }
+                App {}
+            }
+        })
 }
 
 #[component]
-fn app() -> Element {
+fn App() -> Element {
     use_asset_handler("logos", |request, response| {
         // We get the original path - make sure you handle that!
         let content = std::fs::read(request.uri().path()).unwrap();
@@ -46,23 +53,13 @@ fn app() -> Element {
                 persistence_state.write().set_loaded(value);
             });
 
-            return rsx! {
-                Layout { content: rsx! { "Starting application..." } }
-            };
+            return rsx! { "Starting application..." };
         }
-        DataState::Loading => {
-            return rsx! {
-                Layout { content: rsx! { "Starting application..." } }
-            }
-        }
+        DataState::Loading => return rsx! { "Starting application..." },
         DataState::Loaded(persistence_state) => persistence_state.clone(),
         DataState::Error(err) => {
             return rsx! {
-                Layout {
-                    content: rsx! {
-                        div { class: "app-start-error", {err.as_str()} }
-                    },
-                }
+                div { class: "app-start-error", {err.as_str()} }
             }
         }
     };
@@ -89,28 +86,19 @@ fn app() -> Element {
     use_context_provider(|| Signal::new(MainState::new(persistence_state, tx)));
 
     rsx! {
-
-        Layout {
-            content: rsx! {
-                div { class: "left-panel",
-                    Panel { left_panel: true }
-                }
-                div { class: "right-panel",
-                    Panel { left_panel: false }
-                }
-
-                BottomPanel {}
-            },
+        div { class: "left-panel",
+            Panel { left_panel: true }
         }
+        div { class: "right-panel",
+            Panel { left_panel: false }
+        }
+
+        BottomPanel {}
+
+
         RenderDialog {}
     }
 }
 
-#[component]
-fn Layout(content: Element) -> Element {
-    rsx! {
-        document::Link { rel: "stylesheet", href: asset!("/assets/styled.css") }
-        document::Link { rel: "stylesheet", href: asset!("/assets/app.css") }
-        {content}
-    }
-}
+static CSS_STYLED: Asset = asset!("/assets/styled.css");
+static CSS_APP: Asset = asset!("/assets/app.css");

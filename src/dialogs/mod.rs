@@ -8,3 +8,7 @@ mod dialog_template;
 pub use dialog_template::*;
 mod delete;
 pub use delete::*;
+mod create_dir;
+pub use create_dir::*;
+mod error_dialog;
+pub use error_dialog::*;

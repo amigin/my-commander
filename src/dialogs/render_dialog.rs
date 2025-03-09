@@ -40,5 +40,14 @@ pub fn RenderDialog() -> Element {
                 }
             }
         }
+
+        super::DialogState::CreateDir(current_path) => {
+            return rsx! {
+                CreateDirDialog { current_path }
+            }
+        }
+        super::DialogState::ErrorDialog { title, msg } => rsx! {
+            ErrorDialog { title, message: msg }
+        },
     }
 }

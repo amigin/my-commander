@@ -47,7 +47,7 @@ pub fn delete(left_panel: Option<bool>) {
             consume_context::<Signal<MainState>>()
                 .write()
                 .get_panel_state_mut(panel_statistics.left_panel)
-                .refresh_files();
+                .refresh_files(AutoSelectElement::None);
         }),
     };
 

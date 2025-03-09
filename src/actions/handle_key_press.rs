@@ -67,6 +67,10 @@ pub fn handle_key_press(
         Key::F3 => {
             super::view_file(panel_statistics.left_panel.into());
         }
+
+        Key::F7 => {
+            super::create_dir();
+        }
         Key::F8 => {
             super::delete(panel_statistics.left_panel.into());
         }

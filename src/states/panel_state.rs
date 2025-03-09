@@ -307,7 +307,8 @@ impl PanelState {
         self.selected_file_index = last_index - 1;
     }
 
-    pub fn refresh_files(&mut self) {
+    pub fn refresh_files(&mut self, set_selected_item: AutoSelectElement) {
+        self.auto_select_after_load = set_selected_item;
         self.files.set_none();
         self.statistics.reset();
     }

@@ -13,6 +13,13 @@ out_dir = "dist"
 # assets file folder
 asset_dir = "assets"
 
+
+[bundle]
+identifier = "com.jetdev"
+publisher = "JetDev"
+icon = ["assets/ico/pfx.png"]
+
+
 [web.app]
 
 # HTML title tag content
