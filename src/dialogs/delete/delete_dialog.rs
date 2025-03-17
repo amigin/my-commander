@@ -13,9 +13,8 @@ pub fn DeleteDialog(
     on_ok: EventHandler<()>,
 ) -> Element {
     let mut state = use_signal(|| StateMode::Confirmation);
-    use_effect(|| {
-        crate::utils::set_focus("btn-cancel");
-    });
+
+    crate::utils::set_focus("btn-cancel");
 
     let state_value = state.read().clone();
 

@@ -301,16 +301,12 @@ pub fn Panel(left_panel: bool) -> Element {
             tabindex: tab_index,
 
             onkeypress: move |ctx| {
-                ctx.prevent_default();
+                crate::actions::handle_key_press(main_state, ctx, panel_statistics);
             },
+
 
             onkeydown: move |ctx| {
-                ctx.prevent_default();
-            },
-
-
-            onkeyup: move |ctx| {
-                crate::actions::handle_key_press(main_state, ctx, panel_statistics);
+                crate::actions::handle_nav_buttons_press(main_state, ctx, panel_statistics);
             },
             table { class: "files-table",
 

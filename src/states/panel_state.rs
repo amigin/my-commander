@@ -162,6 +162,8 @@ impl PanelState {
             }
             PressSpaceActionResult::DoNothing => {}
         }
+
+        //  crate::actions::handle_key_press(main_state, event, panel_statistics);
     }
 
     pub fn set_files(&mut self, files: FilesState) {

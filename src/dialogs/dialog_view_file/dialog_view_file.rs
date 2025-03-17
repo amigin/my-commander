@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use tokio::io::AsyncReadExt;
 
 use super::*;
-use crate::{dialogs::*, DataState, MainState};
+use crate::{dialogs::*, utils::set_focus, DataState, MainState};
 
 #[component]
 pub fn DialogViewFile(file_name: String) -> Element {
@@ -87,9 +87,13 @@ pub fn DialogViewFile(file_name: String) -> Element {
             let text = std::str::from_utf8(&content);
             match text {
                 Ok(text) => {
+                    set_focus("view-text");
                     rsx! {
                         div { class: "view-file-pad",
-                            textarea { style: "width:100%; height:100%; border: none;resize: none; border-radius: 5px;font-family: monospace;",
+                            textarea {
+                                id: "view-text",
+                                readonly: true,
+                                style: "width:100%; height:100%; border: none;resize: none; border-radius: 5px;font-family: monospace;",
                                 {text}
                             }
                         }

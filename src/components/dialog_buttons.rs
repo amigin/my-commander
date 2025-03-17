@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use crate::states::MainState;
 pub fn dialog_buttons(ok_text: &str, ok_focus: bool, on_ok: EventHandler<()>) -> Element {
     if ok_focus {
-        use_effect(|| crate::utils::set_focus("btn-confirm"));
+        crate::utils::set_focus("btn-confirm");
     }
 
     rsx! {
@@ -16,6 +16,9 @@ pub fn dialog_buttons(ok_text: &str, ok_focus: bool, on_ok: EventHandler<()>) ->
                     onclick: move |_| {
                         on_ok.call(());
                     },
+                    onkeyup: |c| {
+                        c.stop_propagation();
+                    },
                     style: "margin-right: 10px",
                     {ok_text}
                 }
@@ -23,8 +26,14 @@ pub fn dialog_buttons(ok_text: &str, ok_focus: bool, on_ok: EventHandler<()>) ->
                     id: "btn-cancel",
                     tabindex: "1",
                     class: "mac-gray-button",
-                    onclick: |_| {
+                    onclick: |c| {
+                        println!("Pressed Dialog Cancel");
                         consume_context::<Signal<MainState>>().write().hide_dialog();
+                    },
+                    onkeypress: |c| {
+                        println!("Cancel Key Up Dialog");
+                        println!("Propagates: {}", c.propagates());
+                        c.stop_propagation();
                     },
                     "Cancel"
                 }

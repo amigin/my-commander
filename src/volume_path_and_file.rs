@@ -18,7 +18,6 @@ impl VolumePathAndFile {
     }
 
     pub fn new_with_path(volume: String, path: &str) -> Self {
-        println!("Creating: {}", volume);
         let volume_length = volume.len();
         let mut result = Self {
             data: volume,

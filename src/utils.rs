@@ -1,5 +1,6 @@
 use crate::consts::*;
 use dioxus::document;
+use dioxus::prelude::*;
 
 pub fn format_bytes(v: u64) -> String {
     if v < 1024 {
@@ -54,15 +55,16 @@ pub fn set_panel_focus(left_panel_active: bool) {
     document::eval(command.as_str());
 }
 
-pub fn set_focus(id: &str) {
-    let command = format!(
-        r#"
-            setTimeout(()=>{{
-            document.getElementById('{id}').focus();
-          }}, 50)
-        "#,
-        id = id
-    );
-
-    document::eval(command.as_str());
+pub fn set_focus(id: &'static str) {
+    use_effect(move || {
+        let command = format!(
+            r#"
+                setTimeout(()=>{{
+                document.getElementById('{id}').focus();
+              }}, 50)
+            "#,
+            id = id
+        );
+        document::eval(command.as_str());
+    });
 }

@@ -7,6 +7,10 @@ pub fn render_select_disk(
     left_panel: bool,
 ) -> Element {
     let disks = main_state_read_access.disks.iter().map(|disk| {
+        //println!("Volume: {}", panel_state.volume_and_path.get_volume());
+
+        //println!("Disk.Path: {}", disk.path.as_str());
+
         rsx! {
             option {
                 selected: panel_state.volume_and_path.get_volume() == disk.path.as_str(),

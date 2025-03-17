@@ -5,7 +5,18 @@ use crate::MainState;
 #[component]
 pub fn DialogTemplate(window_size_style: String, title: String, content: Element) -> Element {
     rsx! {
-        table { id: "dialog-pad",
+        table {
+            id: "dialog-pad",
+            onkeydown: |c| {
+                c.stop_propagation();
+                c.cancel_bubble();
+            },
+            onkeypress: |c| {
+                c.stop_propagation();
+            },
+            onkeyup: |c| {
+                c.stop_propagation();
+            },
             tr { style: "height: 100%; width:100%;",
                 td {
                     div {
